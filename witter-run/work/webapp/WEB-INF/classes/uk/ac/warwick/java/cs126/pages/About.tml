@@ -1,0 +1,7 @@
+<html t:type="layout" title="About Witter"
+      xmlns:t="http://tapestry.apache.org/schema/tapestry_5_1_0.xsd"
+      xmlns:p="tapestry:parameter">
+
+    <p>Witter is a Twitter-clone for CS126.</p>
+
+</html>

@@ -1,0 +1,26 @@
+<html t:type="layout" title="Witter: Followers"
+      t:sidebarTitle="Current Time"
+      xmlns:t="http://tapestry.apache.org/schema/tapestry_5_1_0.xsd"
+      xmlns:p="tapestry:parameter">
+        <!-- Most of the page content, including <head>, <body>, etc. tags, comes from Layout.tml -->
+
+    <h1>Followers</h1>
+    
+    <ul>
+    	<t:loop source="topFollowers" value="follower">
+			<t:actionlink t:id="pickUser" context="follower.id">
+		<div class="user">
+                <div class="username">
+				    ${follower.name}
+                </div>
+                <div class="userdate">
+                    ${follower.prettyDateJoined}
+                </div>
+
+		</div>
+            </t:actionlink>
+	</t:loop>
+    </ul>
+
+
+</html>

@@ -1,0 +1,8 @@
+uk/ac/warwick/java/cs126/services/FollowerStore.java:71: error: cannot find symbol
+            followersOfUid.preOrderTraversal(followersOfUid.getRoot());
+                          ^
+  symbol:   method preOrderTraversal(FollowerStore.Node)
+  location: variable followersOfUid of type FollowerStore.AVLTree<Integer,Date>
+Note: uk/ac/warwick/java/cs126/services/FollowerStore.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+1 error
