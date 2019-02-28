@@ -42,13 +42,64 @@ public class WeetStore implements IWeetStore {
     }
 
     public Weet[] getWeets() {
-        // TODO
-        return null;
+        //Clear the internal tree node traversal storage, traverse the tree and then store the found nodes in an arraylist.
+        this.weetStore.clearNodes();
+        this.weetStore.inOrderTraversal(this.weetStore.getRoot());
+        MyArrayList<Node<Integer, Weet>> nodesFound = this.weetStore.getNodesTraversed();
+
+        //Because we have indexed the weet by their id, we need to now sort the weets.
+        //Im going to do this by adding them all to a new tree with the node key-value pair of <Date, Weet>
+        //And then in order traversing this new tree and returning the weets in the order produced.
+        AVLTree<Date, Weet> weetsByDateTree = new AVLTree<>();
+        //GO over all the weets found, adding them to the new tree.
+        for(int i=0; i<nodesFound.size(); i++) {
+            Node<Integer, Weet> node = nodesFound.get(i);
+            weetsByDateTree.insertKeyValuePair(node.getValue().getDateWeeted(), node.getValue());
+        }
+
+        //Now to traverse the new tree so that we can get all the weets by the date they were added.
+        weetsByDateTree.clearNodes();
+        weetsByDateTree.inOrderTraversal(weetsByDateTree.getRoot());
+        MyArrayList<Node<Date, Weet>> foundByDate = weetsByDateTree.getNodesTraversed();
+
+        //Create the array were going to return, and then populate this array from the arraylist.
+        Weet[] weetsReturn = new Weet[foundByDate.size()];
+        for(int j=0; j<foundByDate.size(); j++) {
+            weetsReturn[j] = foundByDate.get(j).getValue();
+        }
+        return weetsReturn;
     }
 
     public Weet[] getWeetsByUser(User usr) {
-        // TODO
-        return null;
+        this.weetStore.clearNodes();
+        this.weetStore.inOrderTraversal(this.weetStore.getRoot());
+        MyArrayList<Node<Integer, Weet>> foundWeets = this.weetStore.getNodesTraversed();
+
+        //Now we need to check the weets to check if the user who weeted was the one we want.
+        MyArrayList<Node<Integer, Weet>> foundByUser = new MyArrayList<>();
+        for(int i=0; i<foundWeets.size(); i++) {
+            Node<Integer, Weet> node = foundWeets.get(i);
+            if(node.getValue().getUserId() == usr.getId()) {
+                foundByUser.add(node);
+            }
+        }
+
+        //Now to sort the weets by date, we will do this by adding them all to a new tree and traversing it with the key as the date.
+        AVLTree<Date, Weet> weetsTreeByDate = new AVLTree<>();
+        for(int j=0; j<foundByUser.size(); j++) {
+            weetsTreeByDate.insertKeyValuePair(foundByUser.get(j).getValue().getDateWeeted(), foundByUser.get(j).getValue());
+        }
+
+        weetsTreeByDate.clearNodes();
+        weetsTreeByDate.inOrderTraversal(weetsTreeByDate.getRoot());
+        MyArrayList<Node<Date, Weet>> sortedUserWeets = weetsTreeByDate.getNodesTraversed();
+
+        //Now go over the arraylist of nodes in order of date and add them to the weet[]
+        Weet[] weetReturn = new Weet[sortedUserWeets.size()];
+        for(int k=0; k<sortedUserWeets.size(); k++) {
+            weetReturn[k] = sortedUserWeets.get(k).getValue();
+        }
+        return weetReturn;
     }
 
     public Weet[] getWeetsContaining(String query) {
@@ -57,13 +108,48 @@ public class WeetStore implements IWeetStore {
     }
 
     public Weet[] getWeetsOn(Date dateOn) {
-        // TODO
-        return null;
+        //Get all the nodes of the weet tree. aka all the weets
+        this.weetStore.clearNodes();
+        this.weetStore.inOrderTraversal(this.weetStore.getRoot());
+        MyArrayList<Node<Integer, Weet>> nodesFound = this.weetStore.getNodesTraversed();
+
+        MyArrayList<Node<Integer, Weet>> weetsOn = new MyArrayList<>();
+        for(int i=0; i<nodesFound.size(); i++) {
+            Node<Integer, Weet> node = nodesFound.get(i);
+            if(node.getValue().getDateWeeted().getDay() == dateOn.getDay()) {
+                weetsOn.add(node);
+            }
+        }
+
+        //Create the return array.
+        Weet[] weetReturn = new Weet[weetsOn.size()];
+        for(int j=0; j<weetsOn.size(); j++) {
+            weetReturn[j] = weetsOn.get(j).getValue();
+        }
+        return weetReturn;
+
     }
 
     public Weet[] getWeetsBefore(Date dateBefore) {
-        // TODO
-        return null;
+        //Get all the nodes of the weet tree. aka all the weets
+        this.weetStore.clearNodes();
+        this.weetStore.inOrderTraversal(this.weetStore.getRoot());
+        MyArrayList<Node<Integer, Weet>> nodesFound = this.weetStore.getNodesTraversed();
+
+        MyArrayList<Node<Integer, Weet>> weetsBefore = new MyArrayList<>();
+        for(int i=0; i<nodesFound.size(); i++) {
+            Node<Integer, Weet> node = nodesFound.get(i);
+            if(node.getValue().getDateWeeted().before(dateBefore)) {
+                weetsBefore.add(node);
+            }
+        }
+
+        //Create the return array.
+        Weet[] weetReturn = new Weet[weetsBefore.size()];
+        for(int j=0; j<weetsBefore.size(); j++) {
+            weetReturn[j] = weetsBefore.get(j).getValue();
+        }
+        return weetReturn;
     }
 
     public String[] getTrending() {
@@ -359,7 +445,7 @@ class MyArrayList<E> {
 
     public MyArrayList() {
         this.capacity = 128;
-        this.array = new Object[capacity];
+        this.array = new Object[this.capacity];
         this.size = 0;
     }
 
