@@ -96,9 +96,12 @@ public class FollowerStore implements IFollowerStore {
 
 
         public boolean isAFollower(int uidFollower, int uidFollows) {
-            return false;
+            if(this.followers.get(uidFollows).get(uidFollower) != null) {
+                return true;
+            } else {
+                return false;
+            }
         }
-
 
         public int getNumFollowers(int uid) {
             if(this.followers.get(uid) != null) {
@@ -109,13 +112,85 @@ public class FollowerStore implements IFollowerStore {
         }
 
         public int[] getMutualFollowers(int uid1, int uid2) {
-            // TODO
-            return null;
+            //Get the followers for the users.
+            AVLTree<Integer, Date> uid1Followers = this.followers.get(uid1);
+            AVLTree<Integer, Date> uid2Followers = this.followers.get(uid2);
+
+            //Now convert the two trees into a list of the nodes.
+            uid1Followers.clearNodes();
+            uid2Followers.clearNodes();
+
+            uid1Followers.inOrderTraversal(uid1Followers.getRoot());
+            uid2Followers.inOrderTraversal(uid2Followers.getRoot());
+
+            MyArrayList<Node<Integer, Date>> uid1List = uid1Followers.getNodesTraversed();
+            MyArrayList<Node<Integer, Date>> uid2List = uid2Followers.getNodesTraversed();
+
+            //Now for the O(n^2) comparison for mutual followers, we will add all mutual nodes to a new arraylist.
+            MyArrayList<Node<Integer, Date>> mutualFollowers = new MyArrayList<>();
+            for(int i=0; i<uid1List.size(); i++) {
+                for(int j=0; j<uid2List.size(); j++) {
+                    if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
+                        //Mutual follower, add to the list.
+                        mutualFollowers.add(uid2List.get(j));
+                    }
+                }
+            }
+
+            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
+            for(int k=0; k<mutualFollowers.size(); k++) {
+                sortedMutualTree.insertKeyValuePair(mutualFollowers.get(k).getValue(), mutualFollowers.get(k).getKey());
+            }
+
+            sortedMutualTree.clearNodes();
+            sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
+            MyArrayList<Node<Date, Integer>> sortedMutualList = sortedMutualTree.getNodesTraversed();
+            int[] toReturn = new int[sortedMutualList.size()];
+            for(int l=0; l<sortedMutualList.size(); l++) {
+                toReturn[l] = sortedMutualList.get(l).getValue();
+            }
+            return toReturn;
         }
 
         public int[] getMutualFollows(int uid1, int uid2) {
-            // TODO
-            return null;
+            //Get the followers for the users.
+            AVLTree<Integer, Date> uid1Follows = this.follows.get(uid1);
+            AVLTree<Integer, Date> uid2Follows = this.follows.get(uid2);
+
+            //Now convert the two trees into a list of the nodes.
+            uid1Follows.clearNodes();
+            uid2Follows.clearNodes();
+
+            uid1Follows.inOrderTraversal(uid1Follows.getRoot());
+            uid2Follows.inOrderTraversal(uid2Follows.getRoot());
+
+            MyArrayList<Node<Integer, Date>> uid1List = uid1Follows.getNodesTraversed();
+            MyArrayList<Node<Integer, Date>> uid2List = uid2Follows.getNodesTraversed();
+
+            //Now for the O(n^2) comparison for mutual followers, we will add all mutual nodes to a new arraylist.
+            MyArrayList<Node<Integer, Date>> mutualFollows = new MyArrayList<>();
+            for(int i=0; i<uid1List.size(); i++) {
+                for(int j=0; j<uid2List.size(); j++) {
+                    if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
+                        //Mutual follower, add to the list.
+                        mutualFollows.add(uid2List.get(j));
+                    }
+                }
+            }
+
+            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
+            for(int k=0; k<mutualFollows.size(); k++) {
+                sortedMutualTree.insertKeyValuePair(mutualFollows.get(k).getValue(), mutualFollows.get(k).getKey());
+            }
+
+            sortedMutualTree.clearNodes();
+            sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
+            MyArrayList<Node<Date, Integer>> sortedMutualList = sortedMutualTree.getNodesTraversed();
+            int[] toReturn = new int[sortedMutualList.size()];
+            for(int l=0; l<sortedMutualList.size(); l++) {
+                toReturn[l] = sortedMutualList.get(l).getValue();
+            }
+            return toReturn;
         }
 
         public int[] getTopUsers() {

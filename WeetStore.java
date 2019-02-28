@@ -103,8 +103,31 @@ public class WeetStore implements IWeetStore {
     }
 
     public Weet[] getWeetsContaining(String query) {
-        // TODO
-        return null;
+        //Get all the weets.
+        this.weetStore.clearNodes();
+        this.weetStore.inOrderTraversal(this.weetStore.getRoot());
+        MyArrayList<Node<Integer, Weet>> weetsFound = this.weetStore.getNodesTraversed();
+        MyArrayList<Node<Integer, Weet>> weetsContaining = new MyArrayList<>();
+        for(int i=0; i<weetsFound.size(); i++) {
+            if(weetsFound.get(i).getValue().getMessage().contains(query)) {
+                weetsContaining.add(weetsFound.get(i));
+            }
+        }
+
+        AVLTree<Integer, Weet> sortedWeetsContaining = new AVLTree<>();
+        for(int j=0; j<weetsContaining.size(); j++) {
+            sortedWeetsContaining.insertKeyValuePair(weetsContaining.get(j).getKey(), weetsContaining.get(j).getValue());
+        }
+
+        sortedWeetsContaining.clearNodes();
+        sortedWeetsContaining.inOrderTraversal(sortedWeetsContaining.getRoot());
+        MyArrayList<Node<Integer, Weet>> allSortedWeetsContaining = sortedWeetsContaining.getNodesTraversed();
+
+        Weet[] toReturn = new Weet[allSortedWeetsContaining.size()];
+        for(int k=0; k<allSortedWeetsContaining.size(); k++) {
+            toReturn[k] = allSortedWeetsContaining.get(k).getValue();
+        }
+        return toReturn;
     }
 
     public Weet[] getWeetsOn(Date dateOn) {
