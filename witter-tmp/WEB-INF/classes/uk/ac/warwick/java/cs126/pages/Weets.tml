@@ -1,0 +1,28 @@
+<html t:type="layout" title="Witter: Tweets"
+      t:sidebarTitle="Current Time"
+      xmlns:t="http://tapestry.apache.org/schema/tapestry_5_1_0.xsd"
+      xmlns:p="tapestry:parameter">
+        <!-- Most of the page content, including <head>, <body>, etc. tags, comes from Layout.tml -->
+
+    <h1>Weets</h1>
+    
+    <ul>
+	<t:loop source="Weets" value="weet">
+		<t:actionlink t:context="weet.userId" t:id="pickWeet">
+		<div class="tweet">		
+			<div class="tweetdate">
+			</div>
+			<div class="username">
+				${userName}
+			</div>
+			<div class="tweetmessage">
+				${weet.message}
+			</div>
+			<div class="tweetdate">
+				${weet.prettyDateWeeted}
+			</div>
+		</div>
+		</t:actionlink>
+	</t:loop>
+	</ul>
+</html>

@@ -1,0 +1,50 @@
+<html t:type="layout" title="Witter Index"
+      t:sidebarTitle="Current Time"
+      xmlns:t="http://tapestry.apache.org/schema/tapestry_5_1_0.xsd"
+      xmlns:p="tapestry:parameter">
+        <!-- Most of the page content, including <head>, <body>, etc. tags, comes from Layout.tml -->
+
+    <h1> Search Results </h1>
+    
+    <p>You searched for <em>"${searchQuery}"</em>...</p>
+    
+    <h2>Users</h2>
+    <ul>
+    	<t:loop source="Users" value="user">
+			<t:actionlink t:id="pickUser" context="user.id">
+		<div class="user">
+                <div class="username">
+				    ${user.name}
+                </div>
+                <div class="userdate">
+                    Joined on: ${user.dateJoined}
+                </div>
+
+		</div>
+            </t:actionlink>
+	</t:loop>
+    </ul>
+        
+    <h2>Weets</h2>
+    <ul>
+    	<t:loop source="Weets" value="weet">
+		<t:actionlink t:context="weet.userId" t:id="pickWeet">
+		<div class="tweet">		
+			<div class="tweetdate">
+			</div>
+			<div class="username">
+				${userName}
+			</div>
+			<div class="tweetmessage">
+				${weet.message}
+			</div>
+			<div class="tweetdate">
+				${weet.prettyDateWeeted}
+			</div>
+		</div>
+		</t:actionlink>
+	</t:loop>
+	</ul>
+
+
+</html>

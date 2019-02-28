@@ -455,6 +455,10 @@ public class WeetStore implements IWeetStore {
       public V getValue() {
     	  return this.value;
       }
+      
+      public K getKey() {
+    	  return this.key;
+      }
 
     //End of the Node class.
 }
@@ -482,8 +486,8 @@ class MyArrayList<E> {
     		}
     		this.array = newArray;
     		this.capacity = this.capacity * 2;
-        this.array[size] = element;
-        this.size++;
+	        this.array[size] = element;
+	        this.size++;
     	} else {
     		this.array[size] = element;
     		this.size++;
