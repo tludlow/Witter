@@ -456,6 +456,10 @@ public class WeetStore implements IWeetStore {
     	  return this.value;
       }
 
+      public K getKey() {
+          return this.key;
+      }
+
     //End of the Node class.
 }
 
