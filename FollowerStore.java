@@ -66,6 +66,7 @@ public class FollowerStore implements IFollowerStore {
                 userFollowersTree.inOrderTraversal(userFollowersTree.getRoot());
                 MyArrayList<Node<Integer, Date>> followerNodes = userFollowersTree.getNodesTraversed();
 
+                //TODO SORT
                 int[] followersReturned = new int[followerNodes.size()];
                 for(int i=0; i<followerNodes.size(); i++) {
                     followersReturned[i] = followerNodes.get(i).getKey();
@@ -85,6 +86,7 @@ public class FollowerStore implements IFollowerStore {
                 userFollowsTree.inOrderTraversal(userFollowsTree.getRoot());
                 MyArrayList<Node<Integer, Date>> followNodes = userFollowsTree.getNodesTraversed();
 
+              //TODO SORT
                 int[] followsReturned = new int[followNodes.size()];
                 for(int i=0; i<followNodes.size(); i++) {
                     followsReturned[i] = followNodes.get(i).getKey();
@@ -126,21 +128,26 @@ public class FollowerStore implements IFollowerStore {
             MyArrayList<Node<Integer, Date>> uid1List = uid1Followers.getNodesTraversed();
             MyArrayList<Node<Integer, Date>> uid2List = uid2Followers.getNodesTraversed();
 
-            //Now for the O(n^2) comparison for mutual followers, we will add all mutual nodes to a new arraylist.
-            MyArrayList<Node<Integer, Date>> mutualFollowers = new MyArrayList<>();
+            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
+            
             for(int i=0; i<uid1List.size(); i++) {
                 for(int j=0; j<uid2List.size(); j++) {
                     if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
-                        //Mutual follower, add to the list.
-                        mutualFollowers.add(uid2List.get(j));
+                    	//Check the date of the followings so that we add the first one to the sortedMutualTree
+                    	if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
+                    		//Doesnt really matter, just going to add uid1 value.
+                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    	} else if (uid1List.get(i).getValue().before(uid2List.get(j).getValue())) {
+                    		//uid1 follow before uid2 follow, add uid1
+                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    	} else {
+                    		//add uid2
+                    		sortedMutualTree.insertKeyValuePair(uid2List.get(j).getValue(), uid2List.get(j).getKey());
+                    	}
                     }
                 }
             }
 
-            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
-            for(int k=0; k<mutualFollowers.size(); k++) {
-                sortedMutualTree.insertKeyValuePair(mutualFollowers.get(k).getValue(), mutualFollowers.get(k).getKey());
-            }
 
             sortedMutualTree.clearNodes();
             sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
@@ -167,20 +174,24 @@ public class FollowerStore implements IFollowerStore {
             MyArrayList<Node<Integer, Date>> uid1List = uid1Follows.getNodesTraversed();
             MyArrayList<Node<Integer, Date>> uid2List = uid2Follows.getNodesTraversed();
 
-            //Now for the O(n^2) comparison for mutual followers, we will add all mutual nodes to a new arraylist.
-            MyArrayList<Node<Integer, Date>> mutualFollows = new MyArrayList<>();
+            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
+            
             for(int i=0; i<uid1List.size(); i++) {
                 for(int j=0; j<uid2List.size(); j++) {
                     if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
-                        //Mutual follower, add to the list.
-                        mutualFollows.add(uid2List.get(j));
+                    	//Check the date of the followings so that we add the first one to the sortedMutualTree
+                    	if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
+                    		//Doesnt really matter, just going to add uid1 value.
+                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    	} else if (uid1List.get(i).getValue().before(uid2List.get(j).getValue())) {
+                    		//uid1 follow before uid2 follow, add uid1
+                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    	} else {
+                    		//add uid2
+                    		sortedMutualTree.insertKeyValuePair(uid2List.get(j).getValue(), uid2List.get(j).getKey());
+                    	}
                     }
                 }
-            }
-
-            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
-            for(int k=0; k<mutualFollows.size(); k++) {
-                sortedMutualTree.insertKeyValuePair(mutualFollows.get(k).getValue(), mutualFollows.get(k).getKey());
             }
 
             sortedMutualTree.clearNodes();
