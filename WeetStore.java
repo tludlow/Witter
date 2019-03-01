@@ -144,6 +144,8 @@ public class WeetStore implements IWeetStore {
             }
         }
 
+        //todo sort the array
+
         //Create the return array.
         Weet[] weetReturn = new Weet[weetsOn.size()];
         for(int j=0; j<weetsOn.size(); j++) {
@@ -167,6 +169,8 @@ public class WeetStore implements IWeetStore {
             }
         }
 
+        //todo sort the weets by date
+
         //Create the return array.
         Weet[] weetReturn = new Weet[weetsBefore.size()];
         for(int j=0; j<weetsBefore.size(); j++) {
@@ -176,13 +180,122 @@ public class WeetStore implements IWeetStore {
     }
 
     public String[] getTrending() {
-        // TODO
-        return null;
+        //Go over the weets in the system, adding any trends to trend array.
+		MyArrayList<Trend> trends = new MyArrayList<>();
+
+		this.weetStore.clearNodes();
+		this.weetStore.inOrderTraversal(this.weetStore.getRoot());
+		MyArrayList<Node<Integer, Weet>> allWeets = this.weetStore.getNodesTraversed();
+
+		//We need to now add the weets to their own tree sorted by the date they were weeted, and then run the code on that tree.
+		AVLTree<Date, Weet> weetTreeByDate = new AVLTree<>();
+		for(int i=0; i<allWeets.size(); i++) {
+			weetTreeByDate.insertKeyValuePair(allWeets.get(i).getValue().getDateWeeted(), allWeets.get(i).getValue());
+		}
+
+		weetTreeByDate.clearNodes();
+		weetTreeByDate.inOrderTraversal(weetTreeByDate.getRoot());
+		MyArrayList<Node<Date, Weet>> allWeetsDateKey = weetTreeByDate.getNodesTraversed();
+
+		for(int i=0; i<allWeetsDateKey.size(); i++) {
+			//Split the current weet into its component words (split by spaces)
+			Weet weet = allWeetsDateKey.get(i).getValue();
+			String[] containedWords = weet.getMessage().split(" ");
+
+			//Go over every words within the containedWords array, if it contains a # get all over the characters following it.
+			containedWordsLoop:
+			for(int j=0; j<containedWords.length; j++) {
+				String word = containedWords[j];
+				//Check if the trends list already is contained.
+				if(word.substring(0, 1).equals("#")) {
+					//We have found a trend, we need to either add this trend the trends arraylist or update the occurences of the trend in the list.
+					//Go over all the trends, check if the we have a match trend text.
+					for(int k=0; k<trends.size(); k++) {
+						if(word.equals(trends.get(k).getMessage())) {
+							//Update the occurence of the trend at position k in the trends list.
+							//System.out.println("Adding occurence to: " + word);
+							trends.get(k).addOccurence();
+							//We can now start the containedWords loop at the next point.
+							continue containedWordsLoop;
+						}
+					}
+					//System.out.println("Adding a new trend to the list of word: " + word);
+					trends.add(new Trend(word));
+				}
+			}
+		}
+
+		//Now we have all the weets stored, we need to order they properly, with the ones with the same occurences having the most recently updated trend first.
+		//Create a new tree for the trends.
+		AVLTree<Trend, String> trendComparisons = new AVLTree<>();
+		for(int i=0; i<trends.size(); i++) {
+			trendComparisons.insertKeyValuePair(trends.get(i), trends.get(i).getMessage());
+		}
+
+		//Get the resulting in order traversal, and then we can get the right order of trends.
+		trendComparisons.clearNodes();
+		trendComparisons.inOrderTraversal(trendComparisons.getRoot());
+		MyArrayList<Node<Trend, String>> trendsOrdered = trendComparisons.getNodesTraversed();
+
+		String[] toReturn = new String[]{null, null, null, null, null, null, null, null, null, null};
+		for(int i=0; i<10; i++) {
+			if(trendsOrdered.get(i) != null) {
+				Trend trend = trendsOrdered.get(i).getKey();
+				toReturn[i] = trend.getMessage();
+				System.out.println(trend.getMessage() + " (" + trend.getOccurences() + ") - " + trend.getLastUpdatedDate());
+			}
+		}
+
+        //We need to return the array as required in the javadocs, lets do that.
+        return toReturn;
     }
 
 
 
+    class Trend implements Comparable<Trend>    {
+		private String message;
+		private int occurences;
+		private Date dateUpdated;
 
+		public Trend(String message) {
+			this.message = message;
+			this.occurences = 1;
+			this.dateUpdated = new Date();
+		}
+
+		public Trend() {
+			// TODO Auto-generated constructor stub
+		}
+
+		public String getMessage() {
+			return this.message;
+		}
+
+		public void addOccurence() {
+			this.occurences++;
+			this.dateUpdated = new Date();
+		}
+
+		public int getOccurences() {
+			return this.occurences;
+		}
+
+		public Date getLastUpdatedDate() {
+			return this.dateUpdated;
+		}
+
+
+		//The compareTo function implemented for this trend comparisons.
+		//This produces a two way comparison, with first being the occurences of the trend and then the date it was updated.
+		@Override
+		public int compareTo(Trend otherTrend) {
+			int occurenceComparison = this.occurences > otherTrend.getOccurences() ? 1 : this.occurences < otherTrend.getOccurences() ? -1 : 0;
+	        if (occurenceComparison != 0) {
+	            return occurenceComparison;
+	        }
+	        return this.dateUpdated.compareTo(otherTrend.getLastUpdatedDate());
+		}
+    }
 
 
 
@@ -455,10 +568,6 @@ public class WeetStore implements IWeetStore {
       public V getValue() {
     	  return this.value;
       }
-      
-      public K getKey() {
-    	  return this.key;
-      }
 
       public K getKey() {
           return this.key;
@@ -490,8 +599,8 @@ class MyArrayList<E> {
     		}
     		this.array = newArray;
     		this.capacity = this.capacity * 2;
-	        this.array[size] = element;
-	        this.size++;
+        this.array[size] = element;
+        this.size++;
     	} else {
     		this.array[size] = element;
     		this.size++;
