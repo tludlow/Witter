@@ -1,0 +1,7 @@
+uk/ac/warwick/java/cs126/services/FollowerStore.java:661: error: Illegal static declaration in inner class FollowerStore.GenericQuicksortComparable
+    public static <T extends Comparable<T>> void qsort(T[] arr, int a, int b) {
+                                                 ^
+  modifier 'static' is only allowed in constant variable declarations
+Note: uk/ac/warwick/java/cs126/services/FollowerStore.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+1 error

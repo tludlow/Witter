@@ -48,35 +48,31 @@ public class FollowerStore implements IFollowerStore {
         	//Firstly, lets add uid1 following uid2. Find uid1 in the follows tree and add uid2 to the subtree in the uid1 node.
         	this.follows.get(uid1).insertKeyValuePair(uid2, followDate);
 
+            boolean toUpdate = true;
         	//Make sure that the followers tree contains the user of uid2, if not add them.
         	if(this.followers.get(uid2) == null) {
         		//They arent there, add them with an empty follows tree as a subtree in the node.
         		this.followers.insertKeyValuePair(uid2, new AVLTree<Integer, Date>());
+                //They have no followers, lets add them to the ranking followerLeaderboard
+                this.followerLeaderboard.add(new FollowerRanking(uid2, followDate));
+                toUpdate = false;
         	}
 
-        	//Nowe need to add the corresponding action to the followers of uid2.
+        	//Now need to add the corresponding action to the followers of uid2.
         	//This is essentially the same operation but reversed on the follower tree.
         	this.followers.get(uid2).insertKeyValuePair(uid1, followDate);
 
-            //Now to update/add the users follower ranking to the follower leaderboard.
-            //Check if the follower ranking exists.
-            boolean found = false;
-            for(int i=0; i<this.followerLeaderboard.size(); i++) {
-                FollowerRanking ranking = this.followerLeaderboard.get(i);
-                if(ranking.getUserId() == uid2) {
-                    //We have found the users ranking, we can add a follower to it.
-                    found = true;
-                    ranking.addFollower(followDate);
-                    break;
+            if(toUpdate) {
+                for(int i=0; i<this.followerLeaderboard.size(); i++) {
+                    if(this.followerLeaderboard.get(i).getUserId() == uid2) {
+                        this.followerLeaderboard.get(i).addFollower(followDate);
+                    }
                 }
             }
-            //We went through the whole list, check if we found the user.
-            if(found == false) {
-                //We never found the user, we need to add them to the list of followers.
-                this.followerLeaderboard.add(new FollowerRanking(uid2, followDate));
-            }
 
-        	return true;
+            return true;
+
+
         }
 
         public int[] getFollowers(int uid) {
@@ -229,21 +225,8 @@ public class FollowerStore implements IFollowerStore {
 
         public int[] getTopUsers() {
             //mtt matt robert
-            //Add all the users in the followerLeaderboard arraylist to a tree for sorting.
-            AVLTree<FollowerRanking, Integer> rankingTree = new AVLTree<>();
-            for(int i=0; i<this.followerLeaderboard.size(); i++) {
-                rankingTree.insertKeyValuePair(this.followerLeaderboard.get(i), this.followerLeaderboard.get(i).getUserId());
-            }
+            
 
-            rankingTree.clearNodes();
-            rankingTree.inOrderTraversal(rankingTree.getRoot());
-            MyArrayList<Node<FollowerRanking, Integer>> allRankingsSorted = rankingTree.getNodesTraversed();
-
-            int[] toReturn = new int[allRankingsSorted.size()];
-            for(int i=0; i<allRankingsSorted.size(); i++) {
-                toReturn[i] = allRankingsSorted.get(i).getValue();
-            }
-            return toReturn;
         }
 
 
@@ -454,7 +437,7 @@ public class FollowerStore implements IFollowerStore {
 		tempNode.calculateNodeHeight();
 
 		//We now return the node again but the balanced version of it.
-		return tempNode;
+		return tempNode;otherRanking.getLastUpdated().compareTo(this.whenUpdated)
     }
 
     //Recalculates this nodes height from the top down in both the left and right subtrees.
@@ -655,8 +638,10 @@ class FollowerRanking implements Comparable<FollowerRanking> {
 	            return followerComparison;
 	        }
 	        //The followers are the same, return the one who got the follower count first.
-	        return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
+	        //return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
+            return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
 		}
-}
+    }
+
 
 }

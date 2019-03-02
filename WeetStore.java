@@ -33,7 +33,7 @@ public class WeetStore implements IWeetStore {
     /**
      * Time efficiency: O(logn) - O(logn) check for existence in the tree, if the weet with the id provided doesnt exist we can add it twice 2 * O(logn) operations (insertion into AVLTree)
      * I check for the weet existing in the weet id key tree because this is a unique value, a weets date might not be unique.
-     * 
+     *
      */
     public boolean addWeet(Weet weet) {
         if(this.weetStore.get(weet.getId()) != null) {
@@ -76,7 +76,7 @@ public class WeetStore implements IWeetStore {
                 foundByUser.add(node.getValue());
             }
         }
-        
+
         //Now go over the arraylist of nodes in order of date and add them to the weet[]
         Weet[] weetReturn = new Weet[foundByUser.size()];
         for(int k=0; k<foundByUser.size(); k++) {
@@ -90,7 +90,7 @@ public class WeetStore implements IWeetStore {
     	this.weetByDate.clearNodes();
     	this.weetByDate.inOrderTraversal(this.weetByDate.getRoot());
     	MyArrayList<Node<Date, Weet>> weetsFound = this.weetByDate.getNodesTraversed();
-    	
+
         MyArrayList<Weet> weetsContaining = new MyArrayList<>();
         for(int i=0; i<weetsFound.size(); i++) {
             if(weetsFound.get(i).getValue().getMessage().contains(query)) {
@@ -635,7 +635,7 @@ class MyArrayList<E> {
         ret.setCharAt(ret.length()-1, ']');
         return ret.toString();
     }
-    
+
 
 	}
 
