@@ -116,7 +116,7 @@ public class UserStore implements IUserStore {
         usersOrderedByDateTree.inOrderTraversal(usersOrderedByDateTree.getRoot());
         MyArrayList<Node<Date, User>> usersOrdered = usersOrderedByDateTree.getNodesTraversed();
 
-        //Now we need to add the users to an array of the write specification, and then return it.
+        //Now we need to add the users to u an array of the write specification, and then return it.
         User[] toReturn = new User[usersOrdered.size()];
         for(int k=0; k<usersOrdered.size(); k++) {
             toReturn[k] = usersOrdered.get(k).getValue();
