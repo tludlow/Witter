@@ -1,2 +1,15 @@
 ./witter-tmp
 ./witter-run
+FollowerStore.log
+UserStore.log
+WeetStore.log
+
+/witter-run
+/witter-tmp
+
+witter-run
+witter-tmp
+
+bin
+./bin
+/bin

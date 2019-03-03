@@ -154,7 +154,6 @@ public class UserStore implements IUserStore {
     //O(logn) insertion in this tree as we need to traverse the tree to find the right location.
     private Node insertNode(Node locationNode, Node insertingNode) {
         if (locationNode != null) {
-        	this.treeSize++;
             //Compare the location node we intend to the key of the node we are inserting.
             int comparison = ((Comparable<K>) locationNode.key).compareTo((K) insertingNode.key);
 
@@ -176,6 +175,7 @@ public class UserStore implements IUserStore {
 
     //O(logn) peroformance as it just makes a call to the function insertNode()
     public void insertKeyValuePair(K key, V value) {
+        this.treeSize++;
         root = insertNode(root, new Node<>(key, value));
      }
 
