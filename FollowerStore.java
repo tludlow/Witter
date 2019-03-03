@@ -24,7 +24,6 @@ public class FollowerStore implements IFollowerStore {
         	this.follows = new AVLTree<>();
         	this.followers = new AVLTree<>();
 
-            //The leaderboard of followers and the time they were received.
             this.followerLeaderboard = new MyArrayList<>();
         }
 
@@ -48,25 +47,25 @@ public class FollowerStore implements IFollowerStore {
         	//Firstly, lets add uid1 following uid2. Find uid1 in the follows tree and add uid2 to the subtree in the uid1 node.
         	this.follows.get(uid1).insertKeyValuePair(uid2, followDate);
 
-            boolean toUpdate = true;
-        	//Make sure that the followers tree contains the user of uid2, if not add them.
+
         	if(this.followers.get(uid2) == null) {
         		//They arent there, add them with an empty follows tree as a subtree in the node.
         		this.followers.insertKeyValuePair(uid2, new AVLTree<Integer, Date>());
-                //They have no followers, lets add them to the ranking followerLeaderboard
-                this.followerLeaderboard.add(new FollowerRanking(uid2, followDate));
-                toUpdate = false;
+                //We need to insert this person into the tree because they have no followers.
+                this.followerLeaderboard.add(new FollowerRanking(uid2));
         	}
 
         	//Now need to add the corresponding action to the followers of uid2.
         	//This is essentially the same operation but reversed on the follower tree.
         	this.followers.get(uid2).insertKeyValuePair(uid1, followDate);
 
-            if(toUpdate) {
-                for(int i=0; i<this.followerLeaderboard.size(); i++) {
-                    if(this.followerLeaderboard.get(i).getUserId() == uid2) {
-                        this.followerLeaderboard.get(i).addFollower(followDate);
-                    }
+            //The user has a follower and we just added them to the leaderboard, lets update their leaderboard to reflect the fact they have a follower at the given date.
+            for(int i=0; i<this.followerLeaderboard.size(); i++) {
+                FollowerRanking ranking = this.followerLeaderboard.get(i);
+                //We should always find a user, there should never be a scenario when the user isnt in the arraylist.
+                if(ranking.getUserId() == uid2) {
+                    //We have found the ranking update it.
+                    ranking.addFollower(followDate);
                 }
             }
 
@@ -84,15 +83,30 @@ public class FollowerStore implements IFollowerStore {
                 userFollowersTree.inOrderTraversal(userFollowersTree.getRoot());
                 MyArrayList<Node<Integer, Date>> followerNodes = userFollowersTree.getNodesTraversed();
 
-                //TODO SORT
-                int[] followersReturned = new int[followerNodes.size()];
+                AVLTree<Date, Integer> sortedFollowersTree = new AVLTree<>();
                 for(int i=0; i<followerNodes.size(); i++) {
-                    followersReturned[i] = followerNodes.get(i).getKey();
+                    sortedFollowersTree.insertKeyValuePair(followerNodes.get(i).getValue(), followerNodes.get(i).getKey());
                 }
-                return followersReturned;
+
+                sortedFollowersTree.clearNodes();
+                sortedFollowersTree.inOrderTraversal(sortedFollowersTree.getRoot());
+                MyArrayList<Node<Date, Integer>> sortedFollowersNodes = sortedFollowersTree.getNodesTraversed();
+
+                int[] followsReturned = new int[sortedFollowersNodes.size()];
+                for(int i=0; i<sortedFollowersNodes.size(); i++) {
+                    followsReturned[i] = sortedFollowersNodes.get(i).getValue();
+                }
+                return followsReturned;
             }
             return null;
         }
+
+
+        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
+        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
+        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
+        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
+        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
 
 
         public int[] getFollows(int uid) {
@@ -104,10 +118,18 @@ public class FollowerStore implements IFollowerStore {
                 userFollowsTree.inOrderTraversal(userFollowsTree.getRoot());
                 MyArrayList<Node<Integer, Date>> followNodes = userFollowsTree.getNodesTraversed();
 
-              //TODO SORT
-                int[] followsReturned = new int[followNodes.size()];
+                AVLTree<Date, Integer> sortedFollowsTree = new AVLTree<>();
                 for(int i=0; i<followNodes.size(); i++) {
-                    followsReturned[i] = followNodes.get(i).getKey();
+                    sortedFollowsTree.insertKeyValuePair(followNodes.get(i).getValue(), followNodes.get(i).getKey());
+                }
+
+                sortedFollowsTree.clearNodes();
+                sortedFollowsTree.inOrderTraversal(sortedFollowsTree.getRoot());
+                MyArrayList<Node<Date, Integer>> sortedFollowNodes = sortedFollowsTree.getNodesTraversed();
+
+                int[] followsReturned = new int[sortedFollowNodes.size()];
+                for(int i=0; i<sortedFollowNodes.size(); i++) {
+                    followsReturned[i] = sortedFollowNodes.get(i).getValue();
                 }
                 return followsReturned;
             }
@@ -224,15 +246,28 @@ public class FollowerStore implements IFollowerStore {
         }
 
         public int[] getTopUsers() {
-            //mtt matt robert
-            
+            //Create a tree to sort the data within.
+            AVLTree<FollowerRanking, Integer> sortedLeaderboardTree = new AVLTree<>();
 
+            //Collect all of the users from the followerLeaderboard list and themm to a tree for sorting.
+            for(int i=0; i<this.followerLeaderboard.size(); i++) {
+                FollowerRanking ranking = this.followerLeaderboard.get(i);
+                sortedLeaderboardTree.insertKeyValuePair(ranking, ranking.getUserId());
+            }
+
+            //Now we have all of our data in a tree, we should be able to inorder traverse this tree and get the correct leaderboard based on the FollowerRanking comparator.
+            //Lets do that.
+            sortedLeaderboardTree.clearNodes();
+            sortedLeaderboardTree.inOrderTraversal(sortedLeaderboardTree.getRoot());
+            MyArrayList<Node<FollowerRanking, Integer>> sortedList = sortedLeaderboardTree.getNodesTraversed();
+
+            int[] toReturn = new int[sortedList.size()];
+            for(int i=0; i<sortedList.size(); i++) {
+                toReturn[i] = sortedList.get(i).getKey().getUserId();
+            }
+
+            return toReturn;
         }
-
-
-
-
-
 
     class AVLTree<K extends Comparable<K>, V> {
 
@@ -437,7 +472,7 @@ public class FollowerStore implements IFollowerStore {
 		tempNode.calculateNodeHeight();
 
 		//We now return the node again but the balanced version of it.
-		return tempNode;otherRanking.getLastUpdated().compareTo(this.whenUpdated)
+		return tempNode;
     }
 
     //Recalculates this nodes height from the top down in both the left and right subtrees.
@@ -605,15 +640,14 @@ class FollowerRanking implements Comparable<FollowerRanking> {
 		private int followers;
 		private Date whenUpdated;
 
-		public FollowerRanking(int userId, Date date) {
+		public FollowerRanking(int userId) {
 			this.userId = userId;
-			this.followers = 1;
-			this.whenUpdated = date;
+			this.followers = 0;
 		}
 
-		public void addFollower(Date date) {
+		public void addFollower(Date dateUpdated) {
 			this.followers++;
-			this.whenUpdated = date;
+			this.whenUpdated = dateUpdated;
 		}
 
 		public int getFollowers() {
@@ -637,8 +671,7 @@ class FollowerRanking implements Comparable<FollowerRanking> {
 	        if (followerComparison != 0) {
 	            return followerComparison;
 	        }
-	        //The followers are the same, return the one who got the follower count first.
-	        //return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
+
             return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
 		}
     }
