@@ -25,9 +25,13 @@ public class WeetStore implements IWeetStore {
     private AVLTree<Integer, Weet> weetStore;
     private AVLTree<Date, Weet> weetByDate;
 
+    private MyArrayList<Trend> trends;
+
     public WeetStore() {
         this.weetStore = new AVLTree<>();
         this.weetByDate = new AVLTree<>();
+
+        this.trends = new MyArrayList<>();
     }
 
     /**
@@ -41,6 +45,25 @@ public class WeetStore implements IWeetStore {
         } else {
             this.weetStore.insertKeyValuePair(weet.getId(), weet);
             this.weetByDate.insertKeyValuePair(weet.getDateWeeted(), weet);
+
+            //Now to find all the trends in the weet, and update the trending arraylist accordingly.
+            String[] weetWords = weet.getMessage().split(" ");
+            wordsLoop:
+            for(int i=0; i<weetWords.length; i++) {
+                String word = weetWords[i];
+                if(word.substring(0, 1).equals("#")) {
+                    //we have found a hashtag, lets either update it in the trend arraylist or add it.
+                    for(int j=0; j<this.trends.size(); j++) {
+                        Trend trend = this.trends.get(j);
+                        if(word.equals(trend.getMessage())) {
+                            trend.addOccurence();
+                            continue wordsLoop;
+                        }
+                    }
+                    this.trends.add(new Trend(word));
+                }
+            }
+
             return true;
         }
     }
@@ -152,56 +175,11 @@ public class WeetStore implements IWeetStore {
     }
 
     public String[] getTrending() {
-        //Go over the weets in the system, adding any trends to trend array.
-		MyArrayList<Trend> trends = new MyArrayList<>();
-
-		this.weetStore.clearNodes();
-		this.weetStore.inOrderTraversal(this.weetStore.getRoot());
-		MyArrayList<Node<Integer, Weet>> allWeets = this.weetStore.getNodesTraversed();
-
-		//We need to now add the weets to their own tree sorted by the date they were weeted, and then run the code on that tree.
-		AVLTree<Date, Weet> weetTreeByDate = new AVLTree<>();
-		for(int i=0; i<allWeets.size(); i++) {
-			weetTreeByDate.insertKeyValuePair(allWeets.get(i).getValue().getDateWeeted(), allWeets.get(i).getValue());
-		}
-
-		weetTreeByDate.clearNodes();
-		weetTreeByDate.inOrderTraversal(weetTreeByDate.getRoot());
-		MyArrayList<Node<Date, Weet>> allWeetsDateKey = weetTreeByDate.getNodesTraversed();
-
-		for(int i=0; i<allWeetsDateKey.size(); i++) {
-			//Split the current weet into its component words (split by spaces)
-			Weet weet = allWeetsDateKey.get(i).getValue();
-			String[] containedWords = weet.getMessage().split(" ");
-
-			//Go over every words within the containedWords array, if it contains a # get all over the characters following it.
-			containedWordsLoop:
-			for(int j=0; j<containedWords.length; j++) {
-				String word = containedWords[j];
-				//Check if the trends list already is contained.
-				if(word.substring(0, 1).equals("#")) {
-					//We have found a trend, we need to either add this trend the trends arraylist or update the occurences of the trend in the list.
-					//Go over all the trends, check if the we have a match trend text.
-					for(int k=0; k<trends.size(); k++) {
-						if(word.equals(trends.get(k).getMessage())) {
-							//Update the occurence of the trend at position k in the trends list.
-							//System.out.println("Adding occurence to: " + word);
-							trends.get(k).addOccurence();
-							//We can now start the containedWords loop at the next point.
-							continue containedWordsLoop;
-						}
-					}
-					//System.out.println("Adding a new trend to the list of word: " + word);
-					trends.add(new Trend(word));
-				}
-			}
-		}
-
 		//Now we have all the weets stored, we need to order they properly, with the ones with the same occurences having the most recently updated trend first.
 		//Create a new tree for the trends.
 		AVLTree<Trend, String> trendComparisons = new AVLTree<>();
-		for(int i=0; i<trends.size(); i++) {
-			trendComparisons.insertKeyValuePair(trends.get(i), trends.get(i).getMessage());
+		for(int i=0; i<this.trends.size(); i++) {
+			trendComparisons.insertKeyValuePair(this.trends.get(i), this.trends.get(i).getMessage());
 		}
 
 		//Get the resulting in order traversal, and then we can get the right order of trends.
@@ -233,10 +211,6 @@ public class WeetStore implements IWeetStore {
 			this.message = message;
 			this.occurences = 1;
 			this.dateUpdated = new Date();
-		}
-
-		public Trend() {
-			// TODO Auto-generated constructor stub
 		}
 
 		public String getMessage() {
