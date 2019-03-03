@@ -47,26 +47,18 @@ public class FollowerStore implements IFollowerStore {
         	//Firstly, lets add uid1 following uid2. Find uid1 in the follows tree and add uid2 to the subtree in the uid1 node.
         	this.follows.get(uid1).insertKeyValuePair(uid2, followDate);
 
-<<<<<<< HEAD
 
         	if(this.followers.get(uid2) == null) {
         		//They arent there, add them with an empty follows tree as a subtree in the node.
         		this.followers.insertKeyValuePair(uid2, new AVLTree<Integer, Date>());
                 //We need to insert this person into the tree because they have no followers.
                 this.followerLeaderboard.add(new FollowerRanking(uid2));
-=======
-        	//Make sure that the followers tree contains the user of uid2, if not add them.
-        	if(this.followers.get(uid2) == null) {
-        		//They arent there, add them with an empty follows tree as a subtree in the node.
-        		this.followers.insertKeyValuePair(uid2, new AVLTree<Integer, Date>());
->>>>>>> b23b268446618e8c39248dbc3856ce3dbd3d09fd
         	}
 
         	//Now need to add the corresponding action to the followers of uid2.
         	//This is essentially the same operation but reversed on the follower tree.
         	this.followers.get(uid2).insertKeyValuePair(uid1, followDate);
 
-<<<<<<< HEAD
             //The user has a follower and we just added them to the leaderboard, lets update their leaderboard to reflect the fact they have a follower at the given date.
             for(int i=0; i<this.followerLeaderboard.size(); i++) {
                 FollowerRanking ranking = this.followerLeaderboard.get(i);
@@ -74,20 +66,7 @@ public class FollowerStore implements IFollowerStore {
                 if(ranking.getUserId() == uid2) {
                     //We have found the ranking update it.
                     ranking.addFollower(followDate);
-=======
-            boolean toInsert = true;
-            for (int i=0; i<this.followerLeaderboard.size(); i++) {
-                FollowerRanking ranking = this.followerLeaderboard.get(i);
-                if(ranking.getUserId() == uid2) {
-                    //Weh ave found the user in the list, update their follower ranking data.
-                    ranking.addFollower(followDate);
-                    toInsert = false;
->>>>>>> b23b268446618e8c39248dbc3856ce3dbd3d09fd
                 }
-            }
-
-            if(toInsert) {
-                this.followerLeaderboard.add(new FollowerRanking(uid2, followDate));
             }
 
             return true;
@@ -166,6 +145,7 @@ public class FollowerStore implements IFollowerStore {
             }
         }
 
+//46
         public int getNumFollowers(int uid) {
             if(this.followers.get(uid) != null) {
                 //We can just return the size of the followers tree for the provided user.
@@ -691,13 +671,8 @@ class FollowerRanking implements Comparable<FollowerRanking> {
 	        if (followerComparison != 0) {
 	            return followerComparison;
 	        }
-<<<<<<< HEAD
 
             return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
-=======
-	        //The followers are the same, return the one who got the follower count first.
-	        return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
->>>>>>> b23b268446618e8c39248dbc3856ce3dbd3d09fd
 		}
     }
 
