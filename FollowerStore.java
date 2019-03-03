@@ -17,11 +17,15 @@ public class FollowerStore implements IFollowerStore {
         private AVLTree<Integer, AVLTree<Integer, Date>> follows;
 	    private AVLTree<Integer, AVLTree<Integer, Date>> followers;
 
+        private MyArrayList<FollowerRanking> followerLeaderboard;
+
         public FollowerStore() {
         	//Create the new AVLTree objects within their corresponding memory references.
         	this.follows = new AVLTree<>();
         	this.followers = new AVLTree<>();
 
+            //The leaderboard of followers and the time they were received.
+            this.followerLeaderboard = new MyArrayList<>();
         }
 
         public boolean addFollower(int uid1, int uid2, Date followDate) {
@@ -44,17 +48,31 @@ public class FollowerStore implements IFollowerStore {
         	//Firstly, lets add uid1 following uid2. Find uid1 in the follows tree and add uid2 to the subtree in the uid1 node.
         	this.follows.get(uid1).insertKeyValuePair(uid2, followDate);
 
+            boolean toUpdate = true;
         	//Make sure that the followers tree contains the user of uid2, if not add them.
         	if(this.followers.get(uid2) == null) {
         		//They arent there, add them with an empty follows tree as a subtree in the node.
         		this.followers.insertKeyValuePair(uid2, new AVLTree<Integer, Date>());
+                //They have no followers, lets add them to the ranking followerLeaderboard
+                this.followerLeaderboard.add(new FollowerRanking(uid2, followDate));
+                toUpdate = false;
         	}
 
-        	//Nowe need to add the corresponding action to the followers of uid2.
+        	//Now need to add the corresponding action to the followers of uid2.
         	//This is essentially the same operation but reversed on the follower tree.
         	this.followers.get(uid2).insertKeyValuePair(uid1, followDate);
 
-        	return true;
+            if(toUpdate) {
+                for(int i=0; i<this.followerLeaderboard.size(); i++) {
+                    if(this.followerLeaderboard.get(i).getUserId() == uid2) {
+                        this.followerLeaderboard.get(i).addFollower(followDate);
+                    }
+                }
+            }
+
+            return true;
+
+
         }
 
         public int[] getFollowers(int uid) {
@@ -66,6 +84,7 @@ public class FollowerStore implements IFollowerStore {
                 userFollowersTree.inOrderTraversal(userFollowersTree.getRoot());
                 MyArrayList<Node<Integer, Date>> followerNodes = userFollowersTree.getNodesTraversed();
 
+                //TODO SORT
                 int[] followersReturned = new int[followerNodes.size()];
                 for(int i=0; i<followerNodes.size(); i++) {
                     followersReturned[i] = followerNodes.get(i).getKey();
@@ -85,6 +104,7 @@ public class FollowerStore implements IFollowerStore {
                 userFollowsTree.inOrderTraversal(userFollowsTree.getRoot());
                 MyArrayList<Node<Integer, Date>> followNodes = userFollowsTree.getNodesTraversed();
 
+              //TODO SORT
                 int[] followsReturned = new int[followNodes.size()];
                 for(int i=0; i<followNodes.size(); i++) {
                     followsReturned[i] = followNodes.get(i).getKey();
@@ -103,6 +123,7 @@ public class FollowerStore implements IFollowerStore {
             }
         }
 
+//46
         public int getNumFollowers(int uid) {
             if(this.followers.get(uid) != null) {
                 //We can just return the size of the followers tree for the provided user.
@@ -126,21 +147,26 @@ public class FollowerStore implements IFollowerStore {
             MyArrayList<Node<Integer, Date>> uid1List = uid1Followers.getNodesTraversed();
             MyArrayList<Node<Integer, Date>> uid2List = uid2Followers.getNodesTraversed();
 
-            //Now for the O(n^2) comparison for mutual followers, we will add all mutual nodes to a new arraylist.
-            MyArrayList<Node<Integer, Date>> mutualFollowers = new MyArrayList<>();
+            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
+
             for(int i=0; i<uid1List.size(); i++) {
                 for(int j=0; j<uid2List.size(); j++) {
                     if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
-                        //Mutual follower, add to the list.
-                        mutualFollowers.add(uid2List.get(j));
+                    	//Check the date of the followings so that we add the first one to the sortedMutualTree
+                    	if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
+                    		//Doesnt really matter, just going to add uid1 value.
+                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    	} else if (uid1List.get(i).getValue().before(uid2List.get(j).getValue())) {
+                    		//uid1 follow before uid2 follow, add uid1
+                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    	} else {
+                    		//add uid2
+                    		sortedMutualTree.insertKeyValuePair(uid2List.get(j).getValue(), uid2List.get(j).getKey());
+                    	}
                     }
                 }
             }
 
-            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
-            for(int k=0; k<mutualFollowers.size(); k++) {
-                sortedMutualTree.insertKeyValuePair(mutualFollowers.get(k).getValue(), mutualFollowers.get(k).getKey());
-            }
 
             sortedMutualTree.clearNodes();
             sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
@@ -167,20 +193,24 @@ public class FollowerStore implements IFollowerStore {
             MyArrayList<Node<Integer, Date>> uid1List = uid1Follows.getNodesTraversed();
             MyArrayList<Node<Integer, Date>> uid2List = uid2Follows.getNodesTraversed();
 
-            //Now for the O(n^2) comparison for mutual followers, we will add all mutual nodes to a new arraylist.
-            MyArrayList<Node<Integer, Date>> mutualFollows = new MyArrayList<>();
+            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
+
             for(int i=0; i<uid1List.size(); i++) {
                 for(int j=0; j<uid2List.size(); j++) {
                     if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
-                        //Mutual follower, add to the list.
-                        mutualFollows.add(uid2List.get(j));
+                    	//Check the date of the followings so that we add the first one to the sortedMutualTree
+                    	if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
+                    		//Doesnt really matter, just going to add uid1 value.
+                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    	} else if (uid1List.get(i).getValue().before(uid2List.get(j).getValue())) {
+                    		//uid1 follow before uid2 follow, add uid1
+                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    	} else {
+                    		//add uid2
+                    		sortedMutualTree.insertKeyValuePair(uid2List.get(j).getValue(), uid2List.get(j).getKey());
+                    	}
                     }
                 }
-            }
-
-            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
-            for(int k=0; k<mutualFollows.size(); k++) {
-                sortedMutualTree.insertKeyValuePair(mutualFollows.get(k).getValue(), mutualFollows.get(k).getKey());
             }
 
             sortedMutualTree.clearNodes();
@@ -194,8 +224,9 @@ public class FollowerStore implements IFollowerStore {
         }
 
         public int[] getTopUsers() {
-            // TODO
-            return null;
+            //mtt matt robert
+            
+
         }
 
 
@@ -233,7 +264,6 @@ public class FollowerStore implements IFollowerStore {
     //O(logn) insertion in this tree as we need to traverse the tree to find the right location.
     private Node insertNode(Node locationNode, Node insertingNode) {
         if (locationNode != null) {
-        	this.treeSize++;
             //Compare the location node we intend to the key of the node we are inserting.
             int comparison = ((Comparable<K>) locationNode.key).compareTo((K) insertingNode.key);
 
@@ -255,6 +285,7 @@ public class FollowerStore implements IFollowerStore {
 
     //O(logn) peroformance as it just makes a call to the function insertNode()
     public void insertKeyValuePair(K key, V value) {
+        this.treeSize++;
         root = insertNode(root, new Node<>(key, value));
      }
 
@@ -406,7 +437,7 @@ public class FollowerStore implements IFollowerStore {
 		tempNode.calculateNodeHeight();
 
 		//We now return the node again but the balanced version of it.
-		return tempNode;
+		return tempNode;otherRanking.getLastUpdated().compareTo(this.whenUpdated)
     }
 
     //Recalculates this nodes height from the top down in both the left and right subtrees.
@@ -566,4 +597,51 @@ class MyArrayList<E> {
     }
 
 }
+
+
+class FollowerRanking implements Comparable<FollowerRanking> {
+
+		private int userId;
+		private int followers;
+		private Date whenUpdated;
+
+		public FollowerRanking(int userId, Date date) {
+			this.userId = userId;
+			this.followers = 1;
+			this.whenUpdated = date;
+		}
+
+		public void addFollower(Date date) {
+			this.followers++;
+			this.whenUpdated = date;
+		}
+
+		public int getFollowers() {
+			return this.followers;
+		}
+
+		public int getUserId() {
+			return this.userId;
+		}
+
+		public Date getLastUpdated() {
+			return this.whenUpdated;
+		}
+
+		//A method used to compare which followerRanking is higher, very useful.
+		@Override
+		public int compareTo(FollowerRanking otherRanking) {
+			//Compare the follower count of the two users leaderboard rankings.
+			int followerComparison = this.followers > otherRanking.getFollowers() ? 1 : this.followers < otherRanking.getFollowers() ? -1 : 0;
+			//If the followers arent the same, then the ranking is obvious.
+	        if (followerComparison != 0) {
+	            return followerComparison;
+	        }
+	        //The followers are the same, return the one who got the follower count first.
+	        //return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
+            return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
+		}
+    }
+
+
 }
