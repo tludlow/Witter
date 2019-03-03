@@ -237,9 +237,10 @@ public class WeetStore implements IWeetStore {
 		public int compareTo(Trend otherTrend) {
 			int occurenceComparison = this.occurences > otherTrend.getOccurences() ? 1 : this.occurences < otherTrend.getOccurences() ? -1 : 0;
 	        if (occurenceComparison != 0) {
-	            return occurenceComparison;
-	        }
-	        return this.dateUpdated.compareTo(otherTrend.getLastUpdatedDate());
+	               return occurenceComparison;
+	        } else {
+	               return this.dateUpdated.compareTo(otherTrend.getLastUpdatedDate());
+            }
 		}
     }
 

@@ -670,9 +670,12 @@ class FollowerRanking implements Comparable<FollowerRanking> {
 			//If the followers arent the same, then the ranking is obvious.
 	        if (followerComparison != 0) {
 	            return followerComparison;
-	        }
+	        } else {
+                //We must multiply this result by *-1 to produc the the required result of the one occuring first takes presedence
+                return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
+            }
 
-            return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
+
 		}
     }
 
