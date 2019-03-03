@@ -57,70 +57,68 @@ public class UserStore implements IUserStore {
     }
 
     public User[] getUsersContaining(String query) {
-        //Get all the users from the UserStore
-        this.userTree.clearNodes();
-        this.userTree.inOrderTraversal(this.userTree.getRoot());
-        MyArrayList<Node<Integer, User>> usersFound = this.userTree.getNodesTraversed();
-
-        //Store all the users who have joined before the argument date into their own arraylist so we can order them.
-        MyArrayList<User> usersContaining = new MyArrayList<>();
-        for(int i=0; i<usersFound.size(); i++) {
-            Node<Integer, User> node = usersFound.get(i);
-            if(node.getValue().getName().contains(query)) {
-                usersContaining.add(node.getValue());
-            }
-        }
-
-        //Now we need to sort the users we have just found, we will do this by adding them to a tree keyed with the date and in order traversing this.
-        AVLTree<Date, User> usersOrderedByDateTree = new AVLTree<>();
-        for(int j=0; j<usersContaining.size(); j++) {
-            User user = usersContaining.get(j);
-            usersOrderedByDateTree.insertKeyValuePair(user.getDateJoined(), user);
-        }
-
-        usersOrderedByDateTree.clearNodes();
-        usersOrderedByDateTree.inOrderTraversal(usersOrderedByDateTree.getRoot());
-        MyArrayList<Node<Date, User>> usersOrdered = usersOrderedByDateTree.getNodesTraversed();
-
-        //Now we need to add the users to an array of the write specification, and then return it.
-        User[] toReturn = new User[usersOrdered.size()];
-        for(int k=0; k<usersOrdered.size(); k++) {
-            toReturn[k] = usersOrdered.get(k).getValue();
-        }
+        //Get all the users
+    	this.userTree.clearNodes();
+    	this.userTree.inOrderTraversal(this.userTree.getRoot());
+    	MyArrayList<Node<Integer, User>> usersFound = this.userTree.getNodesTraversed();
+    	
+    	//Iterate over all the user's names, if they contain the query string add the node to the containedList.
+    	MyArrayList<Node<Integer, User>> usersContaining = new MyArrayList<>();
+    	for(int i=0; i<usersFound.size(); i++) {
+    		if(usersFound.get(i).getValue().getName().contains(query)) {
+    			usersContaining.add(usersFound.get(i));
+    		}
+    	}
+    	
+    	//Now to sort the array of users containing the query by adding them to a new tree keyed with the date.
+    	AVLTree<Date, User> sortedDateTree = new AVLTree<>();
+    	for(int j=0; j<usersContaining.size(); j++) {
+    		sortedDateTree.insertKeyValuePair(usersContaining.get(j).getValue().getDateJoined(), usersContaining.get(j).getValue());
+    	}
+    	
+    	//Traverse the new tree in order so we get most recent first.
+    	sortedDateTree.clearNodes();
+    	sortedDateTree.inOrderTraversal(sortedDateTree.getRoot());
+    	MyArrayList<Node<Date, User>> sortedDateList = sortedDateTree.getNodesTraversed();
+    	
+    	//Create the storage array which we can return of type User.
+    	User[] toReturn = new User[sortedDateList.size()];
+    	for(int k=0; k<sortedDateList.size(); k++) {
+    		toReturn[k] = sortedDateList.get(k).getValue();
+    	}
         return toReturn;
     }
 
     public User[] getUsersJoinedBefore(Date dateBefore) {
-        //Get all the users from the UserStore
-        this.userTree.clearNodes();
-        this.userTree.inOrderTraversal(this.userTree.getRoot());
-        MyArrayList<Node<Integer, User>> usersFound = this.userTree.getNodesTraversed();
-
-        //Store all the users who have joined before the argument date into their own arraylist so we can order them.
-        MyArrayList<User> usersJoinedBefore = new MyArrayList<>();
-        for(int i=0; i<usersFound.size(); i++) {
-            Node<Integer, User> node = usersFound.get(i);
-            if(node.getValue().getDateJoined().before(dateBefore)) {
-                usersJoinedBefore.add(node.getValue());
-            }
-        }
-
-        //Now we need to sort the users we have just found, we will do this by adding them to a tree keyed with the date and in order traversing this.
-        AVLTree<Date, User> usersOrderedByDateTree = new AVLTree<>();
-        for(int j=0; j<usersJoinedBefore.size(); j++) {
-            User user = usersJoinedBefore.get(j);
-            usersOrderedByDateTree.insertKeyValuePair(user.getDateJoined(), user);
-        }
-
-        usersOrderedByDateTree.clearNodes();
-        usersOrderedByDateTree.inOrderTraversal(usersOrderedByDateTree.getRoot());
-        MyArrayList<Node<Date, User>> usersOrdered = usersOrderedByDateTree.getNodesTraversed();
-
-        //Now we need to add the users to u an array of the write specification, and then return it.
-        User[] toReturn = new User[usersOrdered.size()];
-        for(int k=0; k<usersOrdered.size(); k++) {
-            toReturn[k] = usersOrdered.get(k).getValue();
-        }
+    	//Get all the users
+    	this.userTree.clearNodes();
+    	this.userTree.inOrderTraversal(this.userTree.getRoot());
+    	MyArrayList<Node<Integer, User>> usersFound = this.userTree.getNodesTraversed();
+    	
+    	//Iterate over all the user's names, if they contain the query string add the node to the containedList.
+    	MyArrayList<Node<Integer, User>> usersContaining = new MyArrayList<>();
+    	for(int i=0; i<usersFound.size(); i++) {
+    		if(usersFound.get(i).getValue().getDateJoined().before(dateBefore)) {
+    			usersContaining.add(usersFound.get(i));
+    		}
+    	}
+    	
+    	//Now to sort the array of users containing the query by adding them to a new tree keyed with the date.
+    	AVLTree<Date, User> sortedDateTree = new AVLTree<>();
+    	for(int j=0; j<usersContaining.size(); j++) {
+    		sortedDateTree.insertKeyValuePair(usersContaining.get(j).getValue().getDateJoined(), usersContaining.get(j).getValue());
+    	}
+    	
+    	//Traverse the new tree in order so we get most recent first.
+    	sortedDateTree.clearNodes();
+    	sortedDateTree.inOrderTraversal(sortedDateTree.getRoot());
+    	MyArrayList<Node<Date, User>> sortedDateList = sortedDateTree.getNodesTraversed();
+    	
+    	//Create the storage array which we can return of type User.
+    	User[] toReturn = new User[sortedDateList.size()];
+    	for(int k=0; k<sortedDateList.size(); k++) {
+    		toReturn[k] = sortedDateList.get(k).getValue();
+    	}
         return toReturn;
     }
 
@@ -156,7 +154,6 @@ public class UserStore implements IUserStore {
     //O(logn) insertion in this tree as we need to traverse the tree to find the right location.
     private Node insertNode(Node locationNode, Node insertingNode) {
         if (locationNode != null) {
-        	this.treeSize++;
             //Compare the location node we intend to the key of the node we are inserting.
             int comparison = ((Comparable<K>) locationNode.key).compareTo((K) insertingNode.key);
 
@@ -178,6 +175,7 @@ public class UserStore implements IUserStore {
 
     //O(logn) peroformance as it just makes a call to the function insertNode()
     public void insertKeyValuePair(K key, V value) {
+        this.treeSize++;
         root = insertNode(root, new Node<>(key, value));
      }
 
