@@ -46,21 +46,25 @@ public class WeetStore implements IWeetStore {
             this.weetStore.insertKeyValuePair(weet.getId(), weet);
             this.weetByDate.insertKeyValuePair(weet.getDateWeeted(), weet);
 
-            //Now to find all the trends in the weet, and update the trending arraylist accordingly.
+            //We also now need to scan the weet for trends, because if they have trends we need to add it to the trend "leaderboard"
+            //In the case which the trend is new, otherwise update the trend occurences.
             String[] weetWords = weet.getMessage().split(" ");
+            //Now go over the word, checking it the word starts with a #
             wordsLoop:
             for(int i=0; i<weetWords.length; i++) {
-                String word = weetWords[i];
-                if(word.substring(0, 1).equals("#")) {
-                    //we have found a hashtag, lets either update it in the trend arraylist or add it.
+                if(weetWords[i].substring(0, 1).equals("#")) {
+                    //THis is a trend, find the trend in the trend arraylist.
                     for(int j=0; j<this.trends.size(); j++) {
                         Trend trend = this.trends.get(j);
-                        if(word.equals(trend.getMessage())) {
-                            trend.addOccurence();
-                            continue wordsLoop;
+                        if(weetWords[i].equals(trend.getMessage())) {
+                            //The trend message and the word in the tweet match, we can update the trend occurences.
+                            this.trends.get(j).addOccurence(weet.getDateWeeted());
+                            return true;
                         }
                     }
-                    this.trends.add(new Trend(word));
+
+                    //We never found the weet we wanted, lets add it to the trend list.
+                    this.trends.add(new Trend(weetWords[i], weet.getDateWeeted()));
                 }
             }
 
@@ -175,78 +179,77 @@ public class WeetStore implements IWeetStore {
     }
 
     public String[] getTrending() {
-		//Now we have all the weets stored, we need to order they properly, with the ones with the same occurences having the most recently updated trend first.
-		//Create a new tree for the trends.
-		AVLTree<Trend, String> trendComparisons = new AVLTree<>();
-		for(int i=0; i<this.trends.size(); i++) {
-			trendComparisons.insertKeyValuePair(this.trends.get(i), this.trends.get(i).getMessage());
-		}
-
-		//Get the resulting in order traversal, and then we can get the right order of trends.
-		trendComparisons.clearNodes();
-		trendComparisons.inOrderTraversal(trendComparisons.getRoot());
-		MyArrayList<Node<Trend, String>> trendsOrdered = trendComparisons.getNodesTraversed();
-
 		String[] toReturn = new String[]{null, null, null, null, null, null, null, null, null, null};
-		for(int i=0; i<10; i++) {
-			if(trendsOrdered.get(i) != null) {
-				Trend trend = trendsOrdered.get(i).getKey();
-				toReturn[i] = trend.getMessage();
-				System.out.println(trend.getMessage() + " (" + trend.getOccurences() + ") - " + trend.getLastUpdatedDate());
-			}
-		}
 
-        //We need to return the array as required in the javadocs, lets do that.
+        //Now we need to sort the trends array based on the trend comparator implemented so we can find the order we desire.
+        //We can do this by adding them to a tree and in order traversing it for the results.
+        AVLTree<Trend, String> trendTree = new AVLTree<>();
+        for(int i=0; i<this.trends.size(); i++) {
+            trendTree.insertKeyValuePair(this.trends.get(i), this.trends.get(i).getMessage());
+        }
+
+
+        trendTree.clearNodes();
+        trendTree.inOrderTraversal(trendTree.getRoot());
+        MyArrayList<Node<Trend, String>> sortedTrends = trendTree.getNodesTraversed();
+
+        //go through the sorted trends add them to the return array.
+        for(int i=0; i<10; i++) {
+            toReturn[i] = sortedTrends.get(i).getKey().getMessage();
+        }
+
         return toReturn;
     }
 
+    class Trend implements Comparable<Trend> {
 
+        private String message;
+        private Date updatedAt;
+        private int occurences;
 
-    class Trend implements Comparable<Trend>    {
-		private String message;
-		private int occurences;
-		private Date dateUpdated;
+        public Trend(String message, Date date) {
+            this.message = message;
+            this.updatedAt = date;
+            this.occurences = 1;
+        }
 
-		public Trend(String message) {
-			this.message = message;
-			this.occurences = 1;
-			this.dateUpdated = new Date();
-		}
+        public int getOccurences() {
+            return this.occurences;
+        }
 
-		public String getMessage() {
-			return this.message;
-		}
+        public String getMessage() {
+            return this.message;
+        }
 
-		public void addOccurence() {
-			this.occurences++;
-			this.dateUpdated = new Date();
-		}
+        public Date getUpdatedAt() {
+            return this.updatedAt;
+        }
 
-		public int getOccurences() {
-			return this.occurences;
-		}
+        public void addOccurence(Date date) {
+            this.occurences++;
+            this.updatedAt = date;
+        }
 
-		public Date getLastUpdatedDate() {
-			return this.dateUpdated;
-		}
-
-
-		//The compareTo function implemented for this trend comparisons.
-		//This produces a two way comparison, with first being the occurences of the trend and then the date it was updated.
-		@Override
-		public int compareTo(Trend otherTrend) {
-			int occurenceComparison = this.occurences > otherTrend.getOccurences() ? 1 : this.occurences < otherTrend.getOccurences() ? -1 : 0;
-	        if (occurenceComparison != 0) {
-	               return occurenceComparison;
-	        } else {
-	               return this.dateUpdated.compareTo(otherTrend.getLastUpdatedDate());
+        @Override
+        public int compareTo(Trend otherTrend) {
+            if(this.occurences > otherTrend.getOccurences()) {
+                return 1;
             }
-		}
+            else if (this.occurences < otherTrend.getOccurences()) {
+                return -1;
+            } else {
+                //We need to compare dates.
+                if(this.updatedAt.before(otherTrend.getUpdatedAt())) {
+                    return 1;
+                }
+                else if (this.updatedAt.after(otherTrend.getUpdatedAt())) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            }
+        }
     }
-
-
-
-
 
 
     class AVLTree<K extends Comparable<K>, V> {

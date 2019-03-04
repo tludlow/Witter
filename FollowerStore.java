@@ -665,14 +665,19 @@ class FollowerRanking implements Comparable<FollowerRanking> {
 		//A method used to compare which followerRanking is higher, very useful.
 		@Override
 		public int compareTo(FollowerRanking otherRanking) {
-			//Compare the follower count of the two users leaderboard rankings.
-			int followerComparison = this.followers > otherRanking.getFollowers() ? 1 : this.followers < otherRanking.getFollowers() ? -1 : 0;
-			//If the followers arent the same, then the ranking is obvious.
-	        if (followerComparison != 0) {
-	            return followerComparison;
-	        } else {
-                //We must multiply this result by *-1 to produc the the required result of the one occuring first takes presedence
-                return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
+            if(this.followers > otherRanking.getFollowers()) {
+                return 1;
+            } else if (this.followers < otherRanking.getFollowers()) {
+                return -1;
+            } else {
+                //compare the dates the followers match.
+                if(this.whenUpdated.before(otherRanking.getLastUpdated())) {
+                    return 1;
+                } else if (this.whenUpdated.after(otherRanking.getLastUpdated())) {
+                    return -1;
+                } else {
+                    return 0;
+                }
             }
 
 
