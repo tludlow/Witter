@@ -398,22 +398,6 @@ public class FollowerStore implements IFollowerStore {
     public MyArrayList<Node<K, V>> getNodesTraversed() {
     	return this.nodes;
     }
-
-    //A function to print the current situation of the tree, good for testing.
-    //DELETE BEFORE SUBMISSION, NOT NEEDED.
-    public void dump(Node node, int level) {
-		if (node == null) {
-			return;
-		}
-
-		dump(node.left, level + 1);
-		for (int i = 0; i < level; ++i) {
-			System.out.print('\t');
-		}
-
-		System.out.println(node.key + " " + node.value);
-		dump(node.right, level + 1);
-    }
   //End of the AVLTree class
   }
 
