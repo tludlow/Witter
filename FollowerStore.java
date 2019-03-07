@@ -1,7 +1,7 @@
 /**
  * Your preamble here
  *
- * @author: Your university ID
+ * @author: u1814232
  */
 
 package uk.ac.warwick.java.cs126.services;
@@ -268,6 +268,58 @@ public class FollowerStore implements IFollowerStore {
 
             return toReturn;
         }
+
+
+
+    class FollowerRanking implements Comparable<FollowerRanking> {
+
+        private int userId;
+        private int followers;
+        private Date whenUpdated;
+
+        public FollowerRanking(int userId) {
+            this.userId = userId;
+            this.followers = 0;
+        }
+
+        public void addFollower(Date dateUpdated) {
+            this.followers++;
+            this.whenUpdated = dateUpdated;
+        }
+
+        public int getFollowers() {
+            return this.followers;
+        }
+
+        public int getUserId() {
+            return this.userId;
+        }
+
+        public Date getLastUpdated() {
+            return this.whenUpdated;
+        }
+
+        //A method used to compare which followerRanking is higher, very useful.
+        @Override
+        public int compareTo(FollowerRanking otherRanking) {
+            if(this.followers > otherRanking.getFollowers()) {
+                return 1;
+            } else if (this.followers < otherRanking.getFollowers()) {
+                return -1;
+            } else {
+                //compare the dates the followers match.
+                if(this.whenUpdated.before(otherRanking.getLastUpdated())) {
+                    return 1;
+                } else if (this.whenUpdated.after(otherRanking.getLastUpdated())) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            }
+
+
+        }
+    }
 
     class AVLTree<K extends Comparable<K>, V> {
 
@@ -616,57 +668,6 @@ class MyArrayList<E> {
     }
 
 }
-
-
-class FollowerRanking implements Comparable<FollowerRanking> {
-
-		private int userId;
-		private int followers;
-		private Date whenUpdated;
-
-		public FollowerRanking(int userId) {
-			this.userId = userId;
-			this.followers = 0;
-		}
-
-		public void addFollower(Date dateUpdated) {
-			this.followers++;
-			this.whenUpdated = dateUpdated;
-		}
-
-		public int getFollowers() {
-			return this.followers;
-		}
-
-		public int getUserId() {
-			return this.userId;
-		}
-
-		public Date getLastUpdated() {
-			return this.whenUpdated;
-		}
-
-		//A method used to compare which followerRanking is higher, very useful.
-		@Override
-		public int compareTo(FollowerRanking otherRanking) {
-            if(this.followers > otherRanking.getFollowers()) {
-                return 1;
-            } else if (this.followers < otherRanking.getFollowers()) {
-                return -1;
-            } else {
-                //compare the dates the followers match.
-                if(this.whenUpdated.before(otherRanking.getLastUpdated())) {
-                    return 1;
-                } else if (this.whenUpdated.after(otherRanking.getLastUpdated())) {
-                    return -1;
-                } else {
-                    return 0;
-                }
-            }
-
-
-		}
-    }
 
 
 }
