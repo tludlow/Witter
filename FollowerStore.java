@@ -61,11 +61,12 @@ public class FollowerStore implements IFollowerStore {
             boolean toInsert = true;
             for (int i=0; i<this.followerLeaderboard.size(); i++) {
                 FollowerRanking ranking = this.followerLeaderboard.get(i);
-                if(ranking.getUserId() == uid2) {
-                    //Weh ave found the user in the list, update their follower ranking data.
+                if(uid2 == ranking.getUserId()) {
+                    //We have found the user in the list, update their follower ranking data.
                     ranking.addFollower(followDate);
                     toInsert = false;
                 }
+                
             }
 
             if(toInsert) {
@@ -249,10 +250,6 @@ public class FollowerStore implements IFollowerStore {
 
             return toReturn;
         }
-
-
-
-
 
 
     class AVLTree<K extends Comparable<K>, V> {
@@ -552,8 +549,8 @@ class MyArrayList<E> {
     		}
     		this.array = newArray;
     		this.capacity = this.capacity * 2;
-        this.array[size] = element;
-        this.size++;
+            this.array[size] = element;
+            this.size++;
     	} else {
     		this.array[size] = element;
     		this.size++;
@@ -620,6 +617,7 @@ class MyArrayList<E> {
 }
 
 
+//A class describing how the orders of 
 class FollowerRanking implements Comparable<FollowerRanking> {
 
 		private int userId;
@@ -660,7 +658,7 @@ class FollowerRanking implements Comparable<FollowerRanking> {
 	        }
 	        //The followers are the same, return the one who got the follower count first.
 	        return this.whenUpdated.compareTo(otherRanking.getLastUpdated()) * -1;
-		}
+        }
     }
 
 

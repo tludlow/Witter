@@ -244,7 +244,8 @@ public class WeetStore implements IWeetStore {
 		}
 
 		public void addOccurence() {
-			this.occurences++;
+            this.occurences++;
+            //here we should only update the date of the occurence if its newer than the one currently stored, this is needed as the weets arent loaded in order.
 			this.dateUpdated = new Date();
 		}
 
