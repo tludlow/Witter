@@ -288,7 +288,7 @@ public class FollowerStore implements IFollowerStore {
             this.followers++;
             //Only update the when updated follower if its before the currently stored date, solves problems of date overwriting on bad conditions
             //Need the null check for scenarios where the date is new because its a first follower
-            if(this.whenUpdated == null || dateUpdated.before(this.whenUpdated)) {
+            if(this.whenUpdated == null || dateUpdated.after(this.whenUpdated)) {
                 this.whenUpdated = dateUpdated;
             }
         }
