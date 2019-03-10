@@ -14,261 +14,295 @@ import java.util.Date;
 
 public class FollowerStore implements IFollowerStore {
 
-        private AVLTree<Integer, AVLTree<Integer, Date>> follows;
-	    private AVLTree<Integer, AVLTree<Integer, Date>> followers;
+    //A tree which holds all the follows a user has (their id), which holds all the follows in its own tree.
+    private AVLTree<Integer, AVLTree<Integer, Date>> follows;
+    //A tree which holds all the followers a user has (their id), which holds all the followers in its own tree.
+    private AVLTree<Integer, AVLTree<Integer, Date>> followers;
 
-        private MyArrayList<FollowerRanking> followerLeaderboard;
+    //An arraylist holding the follower rankings of all users who have followers, sorting this using the FollowerRankign Comparable will sort the top followed users.
+    private MyArrayList<FollowerRanking> followerLeaderboard;
 
-        public FollowerStore() {
-        	//Create the new AVLTree objects within their corresponding memory references.
-        	this.follows = new AVLTree<>();
-        	this.followers = new AVLTree<>();
+    public FollowerStore() {
+        //Create the new trees so they are in memory, same for the follower leaderboard
+        this.follows = new AVLTree<>();
+        this.followers = new AVLTree<>();
 
-            this.followerLeaderboard = new MyArrayList<>();
+        this.followerLeaderboard = new MyArrayList<>();
+    }
+
+    /**
+     * addFollower() - Create the follower relationship between two users, where uid1 follows uid2.
+     * O(logn) checks of the follower relationships, and needed updates. O(n) update of the follower ranking leaderboard.
+     * You could take the follower ranking part out and put it in a queue of jobs, which another computer could process (in an ideal real world implementation)
+     * @param uid1 - The user following
+     * @param uid2 - The user being followed by the following user
+     * @param followDate - The date which the follow relationship occured.
+     * @return - True if the follower relationship was created, false otherwise (it probably already exists).
+     */
+    public boolean addFollower(int uid1, int uid2, Date followDate) {
+        //uid1 follows uid2. So uid1 follows should contain uid2 and the uid2 followers should contain uid1. This should not happen if it is already contained.
+
+        //First we need to make sure the uid1 doesnt follow uid2, this will be done by a tree traversal.
+        //If uid1 follows uid2 already this can be returned false, else add the relationship and true.
+        //We only need to search one of the trees, either follows or followers to known this because they should match.
+        if(this.follows.get(uid1) != null && this.follows.get(uid1).get(uid2) != null) {
+            return false;
         }
 
-        public boolean addFollower(int uid1, int uid2, Date followDate) {
-            //uid1 follows uid2. So uid1 follows should contain uid2 and the uid2 followers should contain uid1. This should not happen if it is already contained.
+        //Make sure that the the follows tree contains the user of id uid1, if not add them.
+        if(this.follows.get(uid1) == null) {
+            //They arent there, add them with an empty follows tree as a subtree in the node.
+            this.follows.insertKeyValuePair(uid1, new AVLTree<Integer, Date>());
+        }
 
-        	//First we need to make sure the uid1 doesnt follow uid2, this will be done by a tree traversal.
-        	//If uid1 follows uid2 already this can be returned false, else add the relationship and true.
-        	//We only need to search one of the trees, either follows or followers to known this because they should match.
-            if(this.follows.get(uid1) != null && this.follows.get(uid1).get(uid2) != null) {
-        		return false;
-        	}
-
-        	//Make sure that the the follows tree contains the user of id uid1, if not add them.
-        	if(this.follows.get(uid1) == null) {
-        		//They arent there, add them with an empty follows tree as a subtree in the node.
-        		this.follows.insertKeyValuePair(uid1, new AVLTree<Integer, Date>());
-        	}
-
-        	//The follower relationship doesnt already exist, we can add the relationship.
-        	//Firstly, lets add uid1 following uid2. Find uid1 in the follows tree and add uid2 to the subtree in the uid1 node.
-        	this.follows.get(uid1).insertKeyValuePair(uid2, followDate);
+        //The follower relationship doesnt already exist, we can add the relationship.
+        //Firstly, lets add uid1 following uid2. Find uid1 in the follows tree and add uid2 to the subtree in the uid1 node.
+        this.follows.get(uid1).insertKeyValuePair(uid2, followDate);
 
 
-        	if(this.followers.get(uid2) == null) {
-        		//They arent there, add them with an empty follows tree as a subtree in the node.
-        		this.followers.insertKeyValuePair(uid2, new AVLTree<Integer, Date>());
-                //We need to insert this person into the tree because they have no followers.
-                this.followerLeaderboard.add(new FollowerRanking(uid2));
-        	}
+        if(this.followers.get(uid2) == null) {
+            //They arent there, add them with an empty follows tree as a subtree in the node.
+            this.followers.insertKeyValuePair(uid2, new AVLTree<Integer, Date>());
+            //We need to insert this person into the tree because they have no followers.
+            this.followerLeaderboard.add(new FollowerRanking(uid2));
+        }
 
-        	//Now need to add the corresponding action to the followers of uid2.
-        	//This is essentially the same operation but reversed on the follower tree.
-        	this.followers.get(uid2).insertKeyValuePair(uid1, followDate);
+        //Now need to add the corresponding action to the followers of uid2.
+        //This is essentially the same operation but reversed on the follower tree.
+        this.followers.get(uid2).insertKeyValuePair(uid1, followDate);
 
-            //The user has a follower and we just added them to the leaderboard, lets update their leaderboard to reflect the fact they have a follower at the given date.
-            for(int i=0; i<this.followerLeaderboard.size(); i++) {
-                FollowerRanking ranking = this.followerLeaderboard.get(i);
-                //We should always find a user, there should never be a scenario when the user isnt in the arraylist.
-                if(ranking.getUserId() == uid2) {
-                    //We have found the ranking update it.
-                    ranking.addFollower(followDate);
-                }
-                
+        //The user has a follower and we just added them to the leaderboard, lets update their leaderboard to reflect the fact they have a follower at the given date.
+        for(int i=0; i<this.followerLeaderboard.size(); i++) {
+            FollowerRanking ranking = this.followerLeaderboard.get(i);
+            //We should always find a user, there should never be a scenario when the user isnt in the arraylist.
+            if(ranking.getUserId() == uid2) {
+                //We have found the ranking update it.
+                ranking.addFollower(followDate);
+            }
+            
+        }
+
+        return true;
+
+
+    }
+
+    /**
+     * getFollowers() - O(n) (scaling with the amount of users) method for gettting all the users which follow the provided user id.
+     * @param uid - The user we want to get all of the followers for.
+     * @return - null when no followers exist for the provided user, else an array of integer representing all the follower user ids. (sorted by the date of the following)
+     */
+    public int[] getFollowers(int uid) {
+        //Check that the user actually has followers
+        if(this.followers.get(uid) != null) {
+            //The user actuallly has follows so we can traverse them and return them.
+            AVLTree<Integer, Date> userFollowersTree = this.followers.get(uid);
+            userFollowersTree.clearNodes();
+            userFollowersTree.inOrderTraversal(userFollowersTree.getRoot());
+            MyArrayList<Node<Integer, Date>> followerNodes = userFollowersTree.getNodesTraversed();
+
+            //We want all the followers sorted by the date they follows, we will add them to a date keyed tree and traverse this for the right order
+            //This is still only a O(n) operation.
+            AVLTree<Date, Integer> sortedFollowersTree = new AVLTree<>();
+            for(int i=0; i<followerNodes.size(); i++) {
+                sortedFollowersTree.insertKeyValuePair(followerNodes.get(i).getValue(), followerNodes.get(i).getKey());
             }
 
+            sortedFollowersTree.clearNodes();
+            sortedFollowersTree.inOrderTraversal(sortedFollowersTree.getRoot());
+            MyArrayList<Node<Date, Integer>> sortedFollowersNodes = sortedFollowersTree.getNodesTraversed();
+
+            //Traverse the sorted date tree and extract the uid's from the nodes to return.
+            int[] followsReturned = new int[sortedFollowersNodes.size()];
+            for(int i=0; i<sortedFollowersNodes.size(); i++) {
+                followsReturned[i] = sortedFollowersNodes.get(i).getValue();
+            }
+            return followsReturned;
+        }
+        return null;
+    }
+
+
+    /**
+     * getFollows() - O(n) method to get all the follows of a user (scaling with the amount of users)
+     * @param uid - The user id of the user we want to get all the follows for.
+     * @return - null if there are no follows, else an array of integers where each integer is a user the provided uid follows (sorted by the date of the follow)
+     */
+    public int[] getFollows(int uid) {
+        //Check that the user actually has followers
+        if(this.follows.get(uid) != null) {
+            //The user actuallly has follows so we can traverse them and return them.
+            AVLTree<Integer, Date> userFollowsTree = this.follows.get(uid);
+            userFollowsTree.clearNodes();
+            userFollowsTree.inOrderTraversal(userFollowsTree.getRoot());
+            MyArrayList<Node<Integer, Date>> followNodes = userFollowsTree.getNodesTraversed();
+
+            //We now want to add all the users back to a tree sorted by date key so we can sort them.
+            AVLTree<Date, Integer> sortedFollowsTree = new AVLTree<>();
+            for(int i=0; i<followNodes.size(); i++) {
+                sortedFollowsTree.insertKeyValuePair(followNodes.get(i).getValue(), followNodes.get(i).getKey());
+            }
+
+            sortedFollowsTree.clearNodes();
+            sortedFollowsTree.inOrderTraversal(sortedFollowsTree.getRoot());
+            MyArrayList<Node<Date, Integer>> sortedFollowNodes = sortedFollowsTree.getNodesTraversed();
+
+            //Get all the sorted follows by date put of its tree and add to the return array as uid's and not Nodes
+            int[] followsReturned = new int[sortedFollowNodes.size()];
+            for(int i=0; i<sortedFollowNodes.size(); i++) {
+                followsReturned[i] = sortedFollowNodes.get(i).getValue();
+            }
+            return followsReturned;
+        }
+        return null;
+    }
+
+
+    /**
+     * isAFollower() - O(logn) operation search an AVLTree to find out if a follower relationship is present.
+     * We only need to look down one of the trees at the top because we have a symmetric relationship between followers 
+     * @param uidFollower - The person who is following
+     * @param uidFollows - The person who is followed
+     * @return true if uidFollower follows uidFollows, else false.
+     */
+    public boolean isAFollower(int uidFollower, int uidFollows) {
+        if(this.followers.get(uidFollows).get(uidFollower) != null) {
             return true;
-
-
+        } else {
+            return false;
         }
+    }
 
-        public int[] getFollowers(int uid) {
-            //Check that the user actually has followers
-            if(this.followers.get(uid) != null) {
-                //The user actuallly has follows so we can traverse them and return them.
-                AVLTree<Integer, Date> userFollowersTree = this.followers.get(uid);
-                userFollowersTree.clearNodes();
-                userFollowersTree.inOrderTraversal(userFollowersTree.getRoot());
-                MyArrayList<Node<Integer, Date>> followerNodes = userFollowersTree.getNodesTraversed();
 
-                AVLTree<Date, Integer> sortedFollowersTree = new AVLTree<>();
-                for(int i=0; i<followerNodes.size(); i++) {
-                    sortedFollowersTree.insertKeyValuePair(followerNodes.get(i).getValue(), followerNodes.get(i).getKey());
-                }
-
-                sortedFollowersTree.clearNodes();
-                sortedFollowersTree.inOrderTraversal(sortedFollowersTree.getRoot());
-                MyArrayList<Node<Date, Integer>> sortedFollowersNodes = sortedFollowersTree.getNodesTraversed();
-
-                int[] followsReturned = new int[sortedFollowersNodes.size()];
-                for(int i=0; i<sortedFollowersNodes.size(); i++) {
-                    followsReturned[i] = sortedFollowersNodes.get(i).getValue();
-                }
-                return followsReturned;
-            }
-            return null;
+    /**
+     * getNumFollowers() - O(logn) method to search a binary tree, we then read the trees size variable to get the size, which is incremented everytime a node
+     * is added to the tree, this saves us having to traverse the tree and count the size of the arraylist returned (memory vs time tradeoff)
+     * @param uid - The user we want to find the size of their follower tree (how many followers they have)
+     * @return - An int count of the number of followers a user has which is provided as the argument.
+     */
+    public int getNumFollowers(int uid) {
+        //Check if the user actually has follows, to prevent nullPointerExceptions
+        if(this.followers.get(uid) != null) {
+            ///The user actually has follows, find out how many by reading the treesize variable from their follower tree.
+            return this.followers.get(uid).getTreeSize();
         }
+        return 0;
+    }
 
+    public int[] getMutualFollowers(int uid1, int uid2) {
+        //Get the followers for the users.
+        AVLTree<Integer, Date> uid1Followers = this.followers.get(uid1);
+        AVLTree<Integer, Date> uid2Followers = this.followers.get(uid2);
 
-        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
-        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
-        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
-        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
-        //TODO maybe take the follow date, integrer key value pair outside also so we can do some easier code for the sorting.
+        //Now convert the two trees into a list of the nodes.
+        uid1Followers.clearNodes();
+        uid2Followers.clearNodes();
 
+        uid1Followers.inOrderTraversal(uid1Followers.getRoot());
+        uid2Followers.inOrderTraversal(uid2Followers.getRoot());
 
-        public int[] getFollows(int uid) {
-            //Check that the user actually has followers
-            if(this.follows.get(uid) != null) {
-                //The user actuallly has follows so we can traverse them and return them.
-                AVLTree<Integer, Date> userFollowsTree = this.follows.get(uid);
-                userFollowsTree.clearNodes();
-                userFollowsTree.inOrderTraversal(userFollowsTree.getRoot());
-                MyArrayList<Node<Integer, Date>> followNodes = userFollowsTree.getNodesTraversed();
+        MyArrayList<Node<Integer, Date>> uid1List = uid1Followers.getNodesTraversed();
+        MyArrayList<Node<Integer, Date>> uid2List = uid2Followers.getNodesTraversed();
 
-                AVLTree<Date, Integer> sortedFollowsTree = new AVLTree<>();
-                for(int i=0; i<followNodes.size(); i++) {
-                    sortedFollowsTree.insertKeyValuePair(followNodes.get(i).getValue(), followNodes.get(i).getKey());
-                }
+        AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
 
-                sortedFollowsTree.clearNodes();
-                sortedFollowsTree.inOrderTraversal(sortedFollowsTree.getRoot());
-                MyArrayList<Node<Date, Integer>> sortedFollowNodes = sortedFollowsTree.getNodesTraversed();
-
-                int[] followsReturned = new int[sortedFollowNodes.size()];
-                for(int i=0; i<sortedFollowNodes.size(); i++) {
-                    followsReturned[i] = sortedFollowNodes.get(i).getValue();
-                }
-                return followsReturned;
-            }
-            return null;
-        }
-
-
-        public boolean isAFollower(int uidFollower, int uidFollows) {
-            if(this.followers.get(uidFollows).get(uidFollower) != null) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-//46
-        public int getNumFollowers(int uid) {
-            if(this.followers.get(uid) != null) {
-                //We can just return the size of the followers tree for the provided user.
-                return this.followers.get(uid).getTreeSize();
-            }
-            return 0;
-        }
-
-        public int[] getMutualFollowers(int uid1, int uid2) {
-            //Get the followers for the users.
-            AVLTree<Integer, Date> uid1Followers = this.followers.get(uid1);
-            AVLTree<Integer, Date> uid2Followers = this.followers.get(uid2);
-
-            //Now convert the two trees into a list of the nodes.
-            uid1Followers.clearNodes();
-            uid2Followers.clearNodes();
-
-            uid1Followers.inOrderTraversal(uid1Followers.getRoot());
-            uid2Followers.inOrderTraversal(uid2Followers.getRoot());
-
-            MyArrayList<Node<Integer, Date>> uid1List = uid1Followers.getNodesTraversed();
-            MyArrayList<Node<Integer, Date>> uid2List = uid2Followers.getNodesTraversed();
-
-            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
-
-            for(int i=0; i<uid1List.size(); i++) {
-                for(int j=0; j<uid2List.size(); j++) {
-                    if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
-                    	//Check the date of the followings so that we add the first one to the sortedMutualTree
-                    	if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
-                    		//Doesnt really matter, just going to add uid1 value.
-                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
-                    	} else if (uid1List.get(i).getValue().before(uid2List.get(j).getValue())) {
-                    		//uid1 follow before uid2 follow, add uid1
-                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
-                    	} else {
-                    		//add uid2
-                    		sortedMutualTree.insertKeyValuePair(uid2List.get(j).getValue(), uid2List.get(j).getKey());
-                    	}
+        for(int i=0; i<uid1List.size(); i++) {
+            for(int j=0; j<uid2List.size(); j++) {
+                if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
+                    //Check the date of the followings so that we add the first one to the sortedMutualTree
+                    if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
+                        //Doesnt really matter, just going to add uid1 value.
+                        sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    } else if (uid1List.get(i).getValue().before(uid2List.get(j).getValue())) {
+                        //uid1 follow before uid2 follow, add uid1
+                        sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    } else {
+                        //add uid2
+                        sortedMutualTree.insertKeyValuePair(uid2List.get(j).getValue(), uid2List.get(j).getKey());
                     }
                 }
             }
-
-
-            sortedMutualTree.clearNodes();
-            sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
-            MyArrayList<Node<Date, Integer>> sortedMutualList = sortedMutualTree.getNodesTraversed();
-            int[] toReturn = new int[sortedMutualList.size()];
-            for(int l=0; l<sortedMutualList.size(); l++) {
-                toReturn[l] = sortedMutualList.get(l).getValue();
-            }
-            return toReturn;
         }
 
-        public int[] getMutualFollows(int uid1, int uid2) {
-            //Get the followers for the users.
-            AVLTree<Integer, Date> uid1Follows = this.follows.get(uid1);
-            AVLTree<Integer, Date> uid2Follows = this.follows.get(uid2);
 
-            //Now convert the two trees into a list of the nodes.
-            uid1Follows.clearNodes();
-            uid2Follows.clearNodes();
+        sortedMutualTree.clearNodes();
+        sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
+        MyArrayList<Node<Date, Integer>> sortedMutualList = sortedMutualTree.getNodesTraversed();
+        int[] toReturn = new int[sortedMutualList.size()];
+        for(int l=0; l<sortedMutualList.size(); l++) {
+            toReturn[l] = sortedMutualList.get(l).getValue();
+        }
+        return toReturn;
+    }
 
-            uid1Follows.inOrderTraversal(uid1Follows.getRoot());
-            uid2Follows.inOrderTraversal(uid2Follows.getRoot());
+    public int[] getMutualFollows(int uid1, int uid2) {
+        //Get the followers for the users.
+        AVLTree<Integer, Date> uid1Follows = this.follows.get(uid1);
+        AVLTree<Integer, Date> uid2Follows = this.follows.get(uid2);
 
-            MyArrayList<Node<Integer, Date>> uid1List = uid1Follows.getNodesTraversed();
-            MyArrayList<Node<Integer, Date>> uid2List = uid2Follows.getNodesTraversed();
+        //Now convert the two trees into a list of the nodes.
+        uid1Follows.clearNodes();
+        uid2Follows.clearNodes();
 
-            AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
+        uid1Follows.inOrderTraversal(uid1Follows.getRoot());
+        uid2Follows.inOrderTraversal(uid2Follows.getRoot());
 
-            for(int i=0; i<uid1List.size(); i++) {
-                for(int j=0; j<uid2List.size(); j++) {
-                    if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
-                    	//Check the date of the followings so that we add the first one to the sortedMutualTree
-                    	if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
-                    		//Doesnt really matter, just going to add uid1 value.
-                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
-                    	} else if (uid1List.get(i).getValue().before(uid2List.get(j).getValue())) {
-                    		//uid1 follow before uid2 follow, add uid1
-                    		sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
-                    	} else {
-                    		//add uid2
-                    		sortedMutualTree.insertKeyValuePair(uid2List.get(j).getValue(), uid2List.get(j).getKey());
-                    	}
+        MyArrayList<Node<Integer, Date>> uid1List = uid1Follows.getNodesTraversed();
+        MyArrayList<Node<Integer, Date>> uid2List = uid2Follows.getNodesTraversed();
+
+        AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
+
+        for(int i=0; i<uid1List.size(); i++) {
+            for(int j=0; j<uid2List.size(); j++) {
+                if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
+                    //Check the date of the followings so that we add the first one to the sortedMutualTree
+                    if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
+                        //Doesnt really matter, just going to add uid1 value.
+                        sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    } else if (uid1List.get(i).getValue().before(uid2List.get(j).getValue())) {
+                        //uid1 follow before uid2 follow, add uid1
+                        sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
+                    } else {
+                        //add uid2
+                        sortedMutualTree.insertKeyValuePair(uid2List.get(j).getValue(), uid2List.get(j).getKey());
                     }
                 }
             }
-
-            sortedMutualTree.clearNodes();
-            sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
-            MyArrayList<Node<Date, Integer>> sortedMutualList = sortedMutualTree.getNodesTraversed();
-            int[] toReturn = new int[sortedMutualList.size()];
-            for(int l=0; l<sortedMutualList.size(); l++) {
-                toReturn[l] = sortedMutualList.get(l).getValue();
-            }
-            return toReturn;
         }
 
-        public int[] getTopUsers() {
-            //Create a tree to sort the data within.
-            AVLTree<FollowerRanking, Integer> sortedLeaderboardTree = new AVLTree<>();
-
-            //Collect all of the users from the followerLeaderboard list and themm to a tree for sorting.
-            for(int i=0; i<this.followerLeaderboard.size(); i++) {
-                FollowerRanking ranking = this.followerLeaderboard.get(i);
-                sortedLeaderboardTree.insertKeyValuePair(ranking, ranking.getUserId());
-            }
-
-            //Now we have all of our data in a tree, we should be able to inorder traverse this tree and get the correct leaderboard based on the FollowerRanking comparator.
-            //Lets do that.
-            sortedLeaderboardTree.clearNodes();
-            sortedLeaderboardTree.inOrderTraversal(sortedLeaderboardTree.getRoot());
-            MyArrayList<Node<FollowerRanking, Integer>> sortedList = sortedLeaderboardTree.getNodesTraversed();
-
-            int[] toReturn = new int[sortedList.size()];
-            for(int i=0; i<sortedList.size(); i++) {
-                toReturn[i] = sortedList.get(i).getKey().getUserId();
-            }
-
-            return toReturn;
+        sortedMutualTree.clearNodes();
+        sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
+        MyArrayList<Node<Date, Integer>> sortedMutualList = sortedMutualTree.getNodesTraversed();
+        int[] toReturn = new int[sortedMutualList.size()];
+        for(int l=0; l<sortedMutualList.size(); l++) {
+            toReturn[l] = sortedMutualList.get(l).getValue();
         }
+        return toReturn;
+    }
+
+    public int[] getTopUsers() {
+        //Create a tree to sort the data within.
+        AVLTree<FollowerRanking, Integer> sortedLeaderboardTree = new AVLTree<>();
+
+        //Collect all of the users from the followerLeaderboard list and themm to a tree for sorting.
+        for(int i=0; i<this.followerLeaderboard.size(); i++) {
+            FollowerRanking ranking = this.followerLeaderboard.get(i);
+            sortedLeaderboardTree.insertKeyValuePair(ranking, ranking.getUserId());
+        }
+
+        //Now we have all of our data in a tree, we should be able to inorder traverse this tree and get the correct leaderboard based on the FollowerRanking comparator.
+        //Lets do that.
+        sortedLeaderboardTree.clearNodes();
+        sortedLeaderboardTree.inOrderTraversal(sortedLeaderboardTree.getRoot());
+        MyArrayList<Node<FollowerRanking, Integer>> sortedList = sortedLeaderboardTree.getNodesTraversed();
+
+        int[] toReturn = new int[sortedList.size()];
+        for(int i=0; i<sortedList.size(); i++) {
+            toReturn[i] = sortedList.get(i).getKey().getUserId();
+        }
+
+        return toReturn;
+    }
 
 
 

@@ -110,20 +110,30 @@ public class WeetStore implements IWeetStore {
         return this.weetStore.get(wid);
     }
 
+    /**
+     * getWeets() - O(n) method traversing all the nodes in the weet tree.
+     * @return - An array of all the weets
+     */
     public Weet[] getWeets() {
-        //Now to traverse the new tree so that we can get all the weets by the date they were added.
+        //Traverse the AVLTree containing all the weets with the key being the date (this means we dont need to sort the weets)
         this.weetByDate.clearNodes();
         this.weetByDate.inOrderTraversal(this.weetByDate.getRoot());
         MyArrayList<Node<Date, Weet>> foundByDate = this.weetByDate.getNodesTraversed();
 
-        //Create the array were going to return, and then populate this array from the arraylist.
+        //Create the return array with a fixed size matching the number of weets.
         Weet[] weetsReturn = new Weet[foundByDate.size()];
+        //Go across all the nodes traversed from the tree, extract the weet information into the return array.
         for(int j=0; j<foundByDate.size(); j++) {
             weetsReturn[j] = foundByDate.get(j).getValue();
         }
         return weetsReturn;
     }
 
+    /** 
+     * getWeetsByUser() - O(n) method to find all the weets created by a given user.
+     * @param usr - The user which we want to find all the weets by.
+     * @return - An array of weets containing those which the user argument created.
+    */
     public Weet[] getWeetsByUser(User usr) {
         this.weetByDate.clearNodes();
         this.weetByDate.inOrderTraversal(this.weetByDate.getRoot());
@@ -146,7 +156,12 @@ public class WeetStore implements IWeetStore {
         return weetReturn;
     }
 
-    //O(n)
+    
+    /**
+     * getWeetsContaining() - O(n) method for finding all the weets containing a specific phrase.
+     * @param query - The word/phrase which we are looking for in the weets to return.
+     * @return - An array of weets where the weets contain the query provided in the argument.
+     */
     public Weet[] getWeetsContaining(String query) {
     	this.weetByDate.clearNodes();
     	this.weetByDate.inOrderTraversal(this.weetByDate.getRoot());
@@ -166,6 +181,11 @@ public class WeetStore implements IWeetStore {
         return toReturn;
     }
 
+    /**
+     * getWeetsOn() - O(n) method for finding all the weets created on a given day.
+     * @param dateOn - The date which we want to find all the weets which are posted on the day provided.
+     * @return - All the weets which were created on the day provided in the dateOn argument.
+     */
     public Weet[] getWeetsOn(Date dateOn) {
         //Get all the nodes of the weet tree. aka all the weets
         this.weetByDate.clearNodes();
@@ -179,7 +199,6 @@ public class WeetStore implements IWeetStore {
                 weetsOn.add(node.getValue());
             }
         }
-
 
         //Create the return array.
         Weet[] weetReturn = new Weet[weetsOn.size()];
