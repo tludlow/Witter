@@ -190,26 +190,34 @@ public class WeetStore implements IWeetStore {
 
     }
 
+    
+    /**
+     * getWeetsBefore() - A method to find all the weets before a given date.
+     * //Time efficiency: O(n) - very hard to get it any quicker as you have to consider every weet having the possibility of being before the argument date.
+     * @param dateBefore - The date for which we want to return all the weets before it.
+     * @return - A weet array of all the weets before the date provided in the argument. The returned weets are sorted so that the most recent weet is first.
+     */
     public Weet[] getWeetsBefore(Date dateBefore) {
-        //Get all the nodes of the weet tree. aka all the weets
-        this.weetByDate.clearNodes();
-        this.weetByDate.inOrderTraversal(this.weetByDate.getRoot());
-        MyArrayList<Node<Date, Weet>> nodesFound = this.weetByDate.getNodesTraversed();
+        //Use the getWeets method to find all the weets in the system sorted by date.
+        Weet[] allWeets = getWeets();
 
+        //Iterate across al the weets, checking if the weet is before the date provided in the argument.
+        //All the weets found with the condition are placed into the arraylist as its dynamically sized.
         MyArrayList<Weet> weetsBefore = new MyArrayList<>();
-        for(int i=0; i<nodesFound.size(); i++) {
-            Node<Date, Weet> node = nodesFound.get(i);
-            if(node.getKey().before(dateBefore)) {
-                weetsBefore.add(node.getValue());
+        for(int i=0; i<allWeets.length; i++) {
+            Weet weet = allWeets[i];
+            if(weet.before(dateBefore)) {
+                weetsBefore.add(weet);
             }
         }
 
-        //Create the return array.
-        Weet[] weetReturn = new Weet[weetsBefore.size()];
-        for(int j=0; j<weetsBefore.size(); j++) {
-            weetReturn[j] = weetsBefore.get(j);
+        //All of the weets found within the weetsBefore should already be sorted as we got them sorted originally.
+        //We just now need to transform the arraylist of weets to an array of weets.
+        Weet[] toReturn = new Weet[weetsBefore.size()];
+        for(int i=0; i<weetsBefore.size(); i++) {
+            toReturn[i] = weetsBefore.get(i);
         }
-        return weetReturn;
+        return toReturn;
     }
 
     /**
