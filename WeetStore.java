@@ -225,7 +225,7 @@ public class WeetStore implements IWeetStore {
         MyArrayList<Weet> weetsBefore = new MyArrayList<>();
         for(int i=0; i<allWeets.length; i++) {
             Weet weet = allWeets[i];
-            if(weet.before(dateBefore)) {
+            if(weet.getDateWeeted().before(dateBefore)) {
                 weetsBefore.add(weet);
             }
         }
@@ -240,7 +240,8 @@ public class WeetStore implements IWeetStore {
     }
 
     /**
-     * getTrends() - Gets the most popular trends from the weets and presents it to the UI on the frontend.
+     * getTrending() - Gets the most popular trends from the weets and presents it to the UI on the frontend.
+     * O(n) performance based on the number of trends in the trends arraylist.
      * @return A fixed size String array of the 10 most popular trends based on the criteria specified in the coursework javadocs.
      */
     public String[] getTrending() {

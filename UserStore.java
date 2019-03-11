@@ -13,6 +13,7 @@ import java.util.Date;
 
 public class UserStore implements IUserStore {
 
+    //An AVL tree of all the users in the system, keyed by their user id because this is unique.
     private AVLTree<Integer, User> userTree = new AVLTree<>();
 
     public UserStore() {

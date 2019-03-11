@@ -189,6 +189,12 @@ public class FollowerStore implements IFollowerStore {
         return 0;
     }
 
+    /**
+     * getMutualFollowers() - O(n^2) method for finding common elements between two arraylists of followers.
+     * @param uid1 - User 1 we want the followers for
+     * @param uid2 - User 2 we want the followers for
+     * @return - An integer array of user id's where the users are followers of both uid1 and uid2
+     */
     public int[] getMutualFollowers(int uid1, int uid2) {
         //Get the followers for the users.
         AVLTree<Integer, Date> uid1Followers = this.followers.get(uid1);
@@ -204,12 +210,13 @@ public class FollowerStore implements IFollowerStore {
         MyArrayList<Node<Integer, Date>> uid1List = uid1Followers.getNodesTraversed();
         MyArrayList<Node<Integer, Date>> uid2List = uid2Followers.getNodesTraversed();
 
+        //A tree to store the mutual followers in, keyed by date so we have the relationships sorted.
         AVLTree<Date, Integer> sortedMutualTree = new AVLTree<>();
 
         for(int i=0; i<uid1List.size(); i++) {
             for(int j=0; j<uid2List.size(); j++) {
                 if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
-                    //Check the date of the followings so that we add the first one to the sortedMutualTree
+                    //We have a mutual follower, now we need to find out which user had the follower first as we want to use this date in the sorting.
                     if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
                         //Doesnt really matter, just going to add uid1 value.
                         sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
@@ -225,6 +232,8 @@ public class FollowerStore implements IFollowerStore {
         }
 
 
+        //Now we have found the mutual followers, in order traverse the sorted mutual tree to get the followers out in most recent first order
+        //We will then convert from Nodes in the tree to an array as required in the interface.
         sortedMutualTree.clearNodes();
         sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
         MyArrayList<Node<Date, Integer>> sortedMutualList = sortedMutualTree.getNodesTraversed();
@@ -235,6 +244,12 @@ public class FollowerStore implements IFollowerStore {
         return toReturn;
     }
 
+    /**
+     * getMutualFollows() - O(n^2) method for finding common elements between two arraylists of follows.
+     * @param uid1 - User 1 we want the follows for
+     * @param uid2 - User 2 we want the follows for
+     * @return - An integer array of user id's where the users are followed by both uid1 and uid2
+     */
     public int[] getMutualFollows(int uid1, int uid2) {
         //Get the followers for the users.
         AVLTree<Integer, Date> uid1Follows = this.follows.get(uid1);
@@ -255,7 +270,7 @@ public class FollowerStore implements IFollowerStore {
         for(int i=0; i<uid1List.size(); i++) {
             for(int j=0; j<uid2List.size(); j++) {
                 if(uid1List.get(i).getKey() == uid2List.get(j).getKey()) {
-                    //Check the date of the followings so that we add the first one to the sortedMutualTree
+                    //We have found a mutual follows, we now need to find which user followed first and use this date in the sorted return tree.
                     if(uid1List.get(i).getValue().equals(uid2List.get(j).getValue())) {
                         //Doesnt really matter, just going to add uid1 value.
                         sortedMutualTree.insertKeyValuePair(uid1List.get(i).getValue(), uid1List.get(i).getKey());
@@ -270,6 +285,8 @@ public class FollowerStore implements IFollowerStore {
             }
         }
 
+        //Traverse the sorted follows tree so we can get the users in most recent first order
+        //We will then convert from Nodes in the tree to an array of user ids and return it.
         sortedMutualTree.clearNodes();
         sortedMutualTree.inOrderTraversal(sortedMutualTree.getRoot());
         MyArrayList<Node<Date, Integer>> sortedMutualList = sortedMutualTree.getNodesTraversed();
@@ -280,6 +297,12 @@ public class FollowerStore implements IFollowerStore {
         return toReturn;
     }
 
+    /**
+     * getTopUsers() - O(n) method to get the tops users from the follower ranking arraylist. We need to sort this arraylist using a tree and the FollowerRanking Comparable
+     * to get the users in the order required in the javadoc. I update the follower leaderboard when adding a follower relationship because it allows this method to run quicker
+     * As specified in the addFollower method you could take that part of the method out and add it to a job queue so the method isnt slower than needs be.
+     * @return An array of user ids where the first elements are the ones who have the most followers, and they got them before the following elements as required.
+     */
     public int[] getTopUsers() {
         //Create a tree to sort the data within.
         AVLTree<FollowerRanking, Integer> sortedLeaderboardTree = new AVLTree<>();
@@ -291,7 +314,7 @@ public class FollowerStore implements IFollowerStore {
         }
 
         //Now we have all of our data in a tree, we should be able to inorder traverse this tree and get the correct leaderboard based on the FollowerRanking comparator.
-        //Lets do that.
+        //Lets do that and then return the array of user ids rather than the nodes we have traversed.
         sortedLeaderboardTree.clearNodes();
         sortedLeaderboardTree.inOrderTraversal(sortedLeaderboardTree.getRoot());
         MyArrayList<Node<FollowerRanking, Integer>> sortedList = sortedLeaderboardTree.getNodesTraversed();
@@ -306,6 +329,8 @@ public class FollowerStore implements IFollowerStore {
 
 
 
+    //A class to represent a user in the follower ranking leaderboard. As the requirements for which user should come first in the leaderboard are somewhat complicated
+    //I have made this class and implemented a comparator to it so we can compare which ranking entry should come first (followers and then date order if they have the same followers)
     class FollowerRanking implements Comparable<FollowerRanking> {
 
         private int userId;
@@ -340,6 +365,7 @@ public class FollowerStore implements IFollowerStore {
         }
 
         //A method used to compare which followerRanking is higher, very useful.
+        //The user with the higher followers comes first, if they have the same followers then the person who got that number of followers first wins.
         @Override
         public int compareTo(FollowerRanking otherRanking) {
             if(this.followers > otherRanking.getFollowers()) {
