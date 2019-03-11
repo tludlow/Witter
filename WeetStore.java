@@ -1,15 +1,33 @@
 /**
- * I have made the decision to use an AVLTree as the primary data structure to store the data regarding Weets. The common operations have time complexities off:
+ * I have chosen to use an AVL Tree and a ArrayList to implement the required functionality of the WeetStore interface.
+ * I have chosen the AVLTree because it is an extension upon the binary search tree, ensuring maximum balance of O(logn) subtrees.
+ * This allows for speedy common operations of the following:
  * Insert: O(logn)
- * Get: O(logn)
- * Remove: O(logn)
  * Search: O(logn)
  * 
- * These are very efficient operations for handling Weet data as having 1,000,000,000 weets would still take, in the worse case 30 operations to locate the weet.
- * Another benefit of using an AVLTree is that it maintains constant space complexity O(n) as the number of weets increases. This is good as it is scalable to mahy weets
- * with a predicatable size of space needed given a number of weets.
+ * I have also chosen to use my own ArrayList implementation, taken from the labs as this allows for easy use of an array (with resizing etc)
+ * This is good because it has contast get times from the internal array unlike a linked list, which without referncing pointers in a loop is O(n) for basic getting
+ * at a specified index.
  * 
- * I have also used an ArrayList in implementing this store as a general method to hold a collection of data. This is used to store results of in-order tree traversals mainly.
+ * The memory complexity of my structures is at most, linear without the amount of data stored. The AVL Tree has O(n) memory usage, which is not much on modern computers
+ * Likewise, the ArrayList is of O(n) space complexity because as the amount of data stored increases, so does the array.
+ * 
+ * I could have potentially used a number of possible data structures to implement the required functionality the interfaces required, another fairly ideal solution
+ * would be using a HashMap to store the data, which would allow for O(1) access times (assuming the load factor is of good standing). This would allow for constant time
+ * operations O(1) but I would have had to write my own Hash function and then it would probably be fairly inefficienct and produce clashes, for which I would have to
+ * chain leading to potentially O(n) operations, slower than the O(logn) operations of an AVL Tree which are guaranteed. Furthermore, much of the interface methods require
+ * the consideration of all users (all users could have joined before a date, so we have to check them all) and the use of any of the named data structures
+ * would not be the bottleneck in the implementations but rather the algorithms themselves.
+ * 
+ * For some of the implementation I have doubled the use of trees, such as below where I have both an Integer keyed tree and a date keyed Tree. The usage of these is
+ * still only O(n) memory as the multiplicative constants are ignored. This allows for simpler method implementations as the sorting of users is already done by the tree
+ * requiring no special sorting algorithms, which are probably slower than the O(n) sorting the tree has (lots of O(logn) inserts and then the traversal is O(n))
+ * 
+ * 
+ * For this interface I have also implemented a class for Trend, which is just a handy way of sorting the numerous words starting with a "#". This class implements 
+ * the Comparable interface provided by Java and aids in the sorting of the different trending words based on the specification provided in the coursework Javadoc.
+ * This is also good as the Tree I have implemented uses comparables to sort the data and by having the Trend class use the comparable interface I can sort the trends
+ * as required using a tree and then traversing it.
  *
  * @author: u1814232
  */
@@ -332,15 +350,14 @@ public class WeetStore implements IWeetStore {
     }
 
 
-    //AVLTree class, an implementation of the abstract data type which extends upon a binary search tree to include strict balancing to satisfy conditions to allow for logn operations.
     class AVLTree<K extends Comparable<K>, V> {
 
         //The root node of this tree. The single node at the top for which every other node stems from.
         private Node root;
-        //The number of nodes within the tree. (root counts as 1.)
+        //the number of nodes within the tree (root = 1)
         private int treeSize;
 
-        //Constructor for the tree, we dont start off with any nodes in the tree, some implementation may sometimes include a given root node.
+        //Constructor for the tree, just sets the treesize to an intiial amount which can be configured.
         public AVLTree() {
             this.treeSize = 0;
         }
@@ -367,9 +384,9 @@ public class WeetStore implements IWeetStore {
                 //Compare the location node we intend to the key of the node we are inserting.
                 int comparison = ((Comparable<K>) locationNode.key).compareTo((K) insertingNode.key);
 
-                //If they are the same we can overwrite the location value with the value of our new node.
+                //If the value is less than or equal to the current node we are checking put it on the left.
                 if (comparison <= 0) {
-                    //The key of the location node is comparatively less than the node we are inserting, we can recursively call the insert down the left of this tree.
+                    //The key of the location node is comparatively less or equal to the node we are inserting, we can recursively call the insert down the left of this tree.
                     locationNode.left = insertNode(locationNode.left, insertingNode);
                 } else {
                     //The key of the location node is comparatively more than the node we are inserting, we can recursively call the insert down the right of this tree.
@@ -383,8 +400,7 @@ public class WeetStore implements IWeetStore {
             }
         }
 
-        //Public method to insert a key value pair into the tree. It makes use of the private recursive method.
-        //Insertions into an AVLTree happen in O(logn) time.
+        //O(logn) peroformance as it just makes a call to the function insertNode()
         public void insertKeyValuePair(K key, V value) {
             this.treeSize++;
             root = insertNode(root, new Node<>(key, value));
@@ -408,7 +424,7 @@ public class WeetStore implements IWeetStore {
                 return null;
             }
 
-            //The node we are trying to find, we will search recursively down the subtrees by calling the second get method below this
+            //The node we are trying to find, we will search recursively down the subtrees by calling the second get method below this (the private recursive method)
             Node toFind = get(root, key);
             if (toFind == null) {
                 return null;
@@ -439,11 +455,11 @@ public class WeetStore implements IWeetStore {
         }
 
 
-        //O(n) performance to get all the nodes in the tree by order root, left, right. (in order)
-        //This is a storage place to keep all the nodes we find within the tree.
+        //Internal storage for the nodes we have traversed in the tree, if this was to be improved I would abstract this outside of the tree so we can define
+        //search paramaters elsewhere in the program to stop the need for having to iterate across all the nodes again once traversed to see which ones match the condition.
         private MyArrayList<Node<K, V>> nodes = new MyArrayList<>();
 
-    //O(n) performance to get all the nodes in the list in ascending order by key.
+        //O(n) performance to get all the nodes in the list in ascending order by key.
         public void inOrderTraversal(Node n) {
             //The node doesnt exist, we cant traverse this.
             if(n == null) {
@@ -456,7 +472,7 @@ public class WeetStore implements IWeetStore {
             inOrderTraversal(n.right); //right
         }
 
-        //Method to clear the locally stored nodes arraylist.
+        //Method to clear the locally stored nodes linked list.
         public void clearNodes() {
             this.nodes.clear();
         }
@@ -465,7 +481,8 @@ public class WeetStore implements IWeetStore {
         public MyArrayList<Node<K, V>> getNodesTraversed() {
             return this.nodes;
         }
-        //End of the AVLTree class
+
+    //End of the AVLTree class
     }
 
     class Node<K, V> {
@@ -491,6 +508,8 @@ public class WeetStore implements IWeetStore {
         }
 
         //A method to perform a right rotation on the tree to aid in its balancing.
+        //Just follows the procedures defined in the ADT specification.
+        //Rotations are ran in O(logn) time.
         public Node rotateRight() {
             //Store the left node temporarily, we will overwrite it but also want it again in the future.
             Node tempNode = this.left;
@@ -511,6 +530,8 @@ public class WeetStore implements IWeetStore {
         }
 
         //A left rotation on this node, aiding in the self balance of the tree to ensure O(logn) search times.
+        //Just follows the principles defined in the ADT definition.
+        //Rotations are ran in O(logn) time.
         public Node rotateLeft() {
             Node tempNode = this.right;
 
@@ -557,6 +578,7 @@ public class WeetStore implements IWeetStore {
         }
 
 
+        //Balance the tree so that at most the tree is of O(logn) height. The tree can baalnce itself in O(logn) time as defined in the ADT specification.
         public Node balanceNode() {
             //Update the current node height, good practice so we can accuratley perform the following operations.
             this.calculateNodeHeight();
@@ -570,7 +592,7 @@ public class WeetStore implements IWeetStore {
                 }
                 return rotateRight();
 
-                //Check for a left skew, if so balance towards the right.
+            //Check for a left skew, if so balance towards the right.
             } else if (currentNodeBalance < -1) {
                 if (this.right.calculateBalance() > 0) {
                     this.right = this.right.rotateRight();
@@ -581,15 +603,16 @@ public class WeetStore implements IWeetStore {
             //Return this node again in its balanced form.
             //This could also be potentially called if the node had no skew, and is therefore just returning itself
             return this;
-            }
+        }
 
-            public V getValue() {
-                return this.value;
-            }
+        //Getters for the generic values found within the node. Used often when a traversal has occured and we want to get the data out from the tree.
+        public V getValue() {
+            return this.value;
+        }
 
-            public K getKey() {
-                return this.key;
-            }
+        public K getKey() {
+            return this.key;
+        }
 
         //End of the Node class.
     }
@@ -597,17 +620,25 @@ public class WeetStore implements IWeetStore {
 
     class MyArrayList<E> {
 
+        //the internal object array which holds all of our elements.
         private Object[] array;
+        //the number of elements currently being held by the arraylist.
         private int size;
+        //the maximum amount of elements we can currently hold without resizing the internal array.
         private int capacity;
 
         public MyArrayList() {
-            this.capacity = 156;
-            this.array = new Object[this.capacity];
+            this.capacity = 128;
+            this.array = new Object[capacity];
             this.size = 0;
         }
 
-        //A method to add to the array list with automatic resizing in the event that the array capacity matches the size of the array.
+        /**
+         * add() - O(1) method to add a new element to the arraylist at the next available position, in the case where the internal array is full a full copy of the arraylist is performed to double its capacity.
+         * In the situation where this occurs the add method runs in O(n) time.
+         * @param element - The element we are trying to add to the arraylist
+         * @return true when the element is added, false otherwise (should never actually be false).
+         */
         public boolean add(E element) {
             if (this.size == this.capacity) {
                 //The size is the same as the capacity we will have to resize the array, copy all elements over to the new array and then overwrite the old array and redefine the new capacity.
@@ -623,14 +654,18 @@ public class WeetStore implements IWeetStore {
                 this.array[size] = element;
                 this.size++;
             }
-            return false;
+            return true;
         }
 
 
-        //Contains - Loops through the array stored in this object and checks for each element against the one provided in the element argument.
-        //If they elements match then true is returned, otherwise the loop just finishes and false is returned.
+        /**
+         * contains() - O(n) method that checks if the provided element is contained within the arraylist.
+         * @param element - The element to check for in the arraylist.
+         * @return - true if the element being checked exists, false otherwise.
+         */
         public boolean contains(E element) {
-            for (int i = 0; i < size; i++) {
+            for (int i=0; i<size; i++) {
+                //Must use a .equals rather than == because it may not be off a primitve type due to the generic nature of the arraylist.
                 if(this.array[i].equals(element)) {
                     return true;
                 }
@@ -638,20 +673,34 @@ public class WeetStore implements IWeetStore {
             return false;
         }
 
+        /**
+         * clear() - O(1) method that resets the arraylist back to its post instantiated state, not used too often.
+         */
         public void clear() {
-            this.capacity = 100;
+            this.capacity = 128;
             this.array = new Object[capacity];
             this.size = 0;
         }
 
+        /**
+         * isEmpty() - O(1) method to check if the arraylist actually contains some elements.
+         */
         public boolean isEmpty() {
             return this.size() == 0;
         }
 
+        /**
+         * size() - Essentially just a getter for the private size variable and is therefore O(1).
+         */
         public int size() {
             return size;
         }
 
+        /**
+         * get() - O(1) method that returns the element contained at the index provieed.
+         * @param index - The position in the arraylist we want to get the data for.
+         * @return the element we have found in the arraylist at the provided index, the type of this element is E.
+         */
         // This line allows us to cast our object to type (E) without any warnings.
         // For further detais, please see: http://docs.oracle.com/javase/1.5.0/docs/api/java/lang/SuppressWarnings.html
         @SuppressWarnings("unchecked")
@@ -659,6 +708,11 @@ public class WeetStore implements IWeetStore {
             return (E) this.array[index];
         }
 
+        /**
+         * indexOf() - O(n) method that finds the index of an element in the arraylist when provided with the element itself.
+         * @param element - The element we want to find the index for.
+         * @return - The integer value of the index where this element exists in the arraylist.
+         */
         public int indexOf(E element) {
             for (int i=0;i<this.size();i++) {
                 if (element.equals(this.get(i))) {
@@ -667,21 +721,7 @@ public class WeetStore implements IWeetStore {
             }
             return -1;
         }
-
-
-        public String toString() {
-            if (this.isEmpty()) {
-                return "[]";
-            }
-            StringBuilder ret = new StringBuilder("[");
-            for (int i=0;i<size;i++) {
-                ret.append(this.get(i)).append(", ");
-            }
-            ret.deleteCharAt(ret.length()-1);
-            ret.setCharAt(ret.length()-1, ']');
-            return ret.toString();
-        }
-        //End of arraylist class.
+    //End of the arraylist class.
     }
-    //End of weetstore class.
+//End of weetstore class.
 }

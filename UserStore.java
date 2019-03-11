@@ -1,5 +1,27 @@
 /**
- * Your preamble here
+ * I have chosen to use an AVL Tree and a ArrayList to implement the required functionality of the WeetStore interface.
+ * I have chosen the AVLTree because it is an extension upon the binary search tree, ensuring maximum balance of O(logn) subtrees.
+ * This allows for speedy common operations of the following:
+ * Insert: O(logn)
+ * Search: O(logn)
+ * 
+ * I have also chosen to use my own ArrayList implementation, taken from the labs as this allows for easy use of an array (with resizing etc)
+ * This is good because it has contast get times from the internal array unlike a linked list, which without referncing pointers in a loop is O(n) for basic getting
+ * at a specified index.
+ * 
+ * The memory complexity of my structures is at most, linear without the amount of data stored. The AVL Tree has O(n) memory usage, which is not much on modern computers
+ * Likewise, the ArrayList is of O(n) space complexity because as the amount of data stored increases, so does the array.
+ * 
+ * I could have potentially used a number of possible data structures to implement the required functionality the interfaces required, another fairly ideal solution
+ * would be using a HashMap to store the data, which would allow for O(1) access times (assuming the load factor is of good standing). This would allow for constant time
+ * operations O(1) but I would have had to write my own Hash function and then it would probably be fairly inefficienct and produce clashes, for which I would have to
+ * chain leading to potentially O(n) operations, slower than the O(logn) operations of an AVL Tree which are guaranteed. Furthermore, much of the interface methods require
+ * the consideration of all users (all users could have joined before a date, so we have to check them all) and the use of any of the named data structures
+ * would not be the bottleneck in the implementations but rather the algorithms themselves.
+ * 
+ * For some of the implementation I have doubled the use of trees, such as below where I have both an Integer keyed tree and a date keyed Tree. The usage of these is
+ * still only O(n) memory as the multiplicative constants are ignored. This allows for simpler method implementations as the sorting of users is already done by the tree
+ * requiring no special sorting algorithms, which are probably slower than the O(n) sorting the tree has (lots of O(logn) inserts and then the traversal is O(n))
  *
  * @author: u1814232
  */
@@ -18,7 +40,6 @@ public class UserStore implements IUserStore {
 
     //An AVL tree of all the users in the system, keyed by their user date so we can sort by when they were created.
     private AVLTree<Date, User> userDateTree = new AVLTree<>();
-
 
     public UserStore() {
         this.userTree = new AVLTree<>();
@@ -428,13 +449,11 @@ public class UserStore implements IUserStore {
                 this.capacity = this.capacity * 2;
                 this.array[size] = element;
                 this.size++;
-                return true;
             } else {
                 this.array[size] = element;
                 this.size++;
-                return true;
             }
-            return false;
+            return true;
         }
 
 
