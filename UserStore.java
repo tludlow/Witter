@@ -16,8 +16,13 @@ public class UserStore implements IUserStore {
     //An AVL tree of all the users in the system, keyed by their user id because this is unique.
     private AVLTree<Integer, User> userTree = new AVLTree<>();
 
+    //An AVL tree of all the users in the system, keyed by their user date so we can sort by when they were created.
+    private AVLTree<Date, User> userDateTree = new AVLTree<>();
+
+
     public UserStore() {
         this.userTree = new AVLTree<>();
+        this.userDateTree = new AVLTree<>();
     }
 
     /**
@@ -27,38 +32,35 @@ public class UserStore implements IUserStore {
     */
     public boolean addUser(User usr) {
         //Check for the user already in the system by searching through the AVLTree
+        //We only need to check one of the user trees because they should contain the same content just one with a date key and one with their id as a key.
         if(this.userTree.get(usr.getId()) != null) {
             return false;
         } else {
             //The user doesnt already exist, add them in the format specified.
             this.userTree.insertKeyValuePair(usr.getId(), usr);
+            this.userDateTree.insertKeyValuePair(usr.getDateJoined(), usr);
             return true;
         }
     }
 
     /**
-    *
+    * getUser() - Get a user object from the tree when specified with a user id.
+    * @param uid - The users ID for which we want to get the user object for
+    * @return - The user object if its present in the tree, null if its not.
     */
     public User getUser(int uid) {
+        //We must use the id key tree because these are unique, if we used the date we may return the wrong user.
         return this.userTree.get(uid);
     }
 
+    /**
+     * getUsers() - Get an array of user objects from the tree (all the users in the system)
+     * @return - The array of users which are in the system, will be an empty array if none are present.
+     */
     public User[] getUsers() {
-        //Clear the internal AVLTree traversal storage, then in order traverse.
-        this.userTree.clearNodes();
-        this.userTree.inOrderTraversal(this.userTree.getRoot());
-        MyArrayList<Node<Integer, User>> usersTraversed = this.userTree.getNodesTraversed();
-
-        //Now to sort the users by the date they joined witter ,we will do this by adding them to an ew avl tree with a kye of the date they joined and then in order traversing this and then reverse iterating the array.
-        AVLTree<Date, User> usersDateTree = new AVLTree<>();
-        for(int i=0; i<usersTraversed.size(); i++) {
-            User user = usersTraversed.get(i).getValue();
-            usersDateTree.insertKeyValuePair(user.getDateJoined(), user);
-        }
-
-        usersDateTree.clearNodes();
-        usersDateTree.inOrderTraversal(usersDateTree.getRoot());
-        MyArrayList<Node<Date, User>> usersTraversedDate = usersDateTree.getNodesTraversed();
+        this.userDateTree.clearNodes();
+        this.userDateTree.inOrderTraversal(this.userDateTree.getRoot());
+        MyArrayList<Node<Date, User>> usersTraversedDate = this.userDateTree.getNodesTraversed();
         User[] usersReturn = new User[usersTraversedDate.size()];
         for(int i=0; i<usersTraversedDate.size(); i++) {
             usersReturn[i] = usersTraversedDate.get(i).getValue();
@@ -67,68 +69,59 @@ public class UserStore implements IUserStore {
         return usersReturn;
     }
 
+    /**
+     * getUsersContaining() - O(n) method to find all the users in the system who have a certain phrase/word contained within their name 
+     * @param query - The query we want to check for in the user's names.
+     * @return - A user array of all the users having the query in their name.
+     */
     public User[] getUsersContaining(String query) {
-        //Get all the users
-    	this.userTree.clearNodes();
-    	this.userTree.inOrderTraversal(this.userTree.getRoot());
-    	MyArrayList<Node<Integer, User>> usersFound = this.userTree.getNodesTraversed();
-
-    	//Iterate over all the user's names, if they contain the query string add the node to the containedList.
-    	MyArrayList<Node<Integer, User>> usersContaining = new MyArrayList<>();
-    	for(int i=0; i<usersFound.size(); i++) {
-    		if(usersFound.get(i).getValue().getName().contains(query)) {
-    			usersContaining.add(usersFound.get(i));
-    		}
-    	}
-
-    	//Now to sort the array of users containing the query by adding them to a new tree keyed with the date.
-    	AVLTree<Date, User> sortedDateTree = new AVLTree<>();
-    	for(int j=0; j<usersContaining.size(); j++) {
-    		sortedDateTree.insertKeyValuePair(usersContaining.get(j).getValue().getDateJoined(), usersContaining.get(j).getValue());
-    	}
-
     	//Traverse the new tree in order so we get most recent first.
-    	sortedDateTree.clearNodes();
-    	sortedDateTree.inOrderTraversal(sortedDateTree.getRoot());
-    	MyArrayList<Node<Date, User>> sortedDateList = sortedDateTree.getNodesTraversed();
+    	this.userDateTree.clearNodes();
+    	this.userDateTree.inOrderTraversal(this.userDateTree.getRoot());
+        MyArrayList<Node<Date, User>> sortedDateList = this.userDateTree.getNodesTraversed();
+        
+        //Go through all the users we have found sorted by the date they joined. If they contain the specified query then add them to the arraylist.
+        MyArrayList<User> containingUsers = new MyArrayList<>();
+        for(int i=0; i<sortedDateList.size(); i++) {
+            User user = sortedDateList.get(i).getValue();
+            if(user.getName().contains(query)) {
+                //The user has the query, add them to the contains arraylist.
+                containingUsers.add(user);
+            }
+        }
 
     	//Create the storage array which we can return of type User.
-    	User[] toReturn = new User[sortedDateList.size()];
-    	for(int k=0; k<sortedDateList.size(); k++) {
-    		toReturn[k] = sortedDateList.get(k).getValue();
+    	User[] toReturn = new User[containingUsers.size()];
+    	for(int k=0; k<containingUsers.size(); k++) {
+    		toReturn[k] = containingUsers.get(k);
     	}
         return toReturn;
     }
 
+    /**
+     * getUsersJoinedBefore() - O(n) method to get all the users which joined the system before a provided date.
+     * @param dateBefore - The date we want to use to compare against user joined dates. If the user joined before this date we will return them.
+     * @return - A user array of all the users joining the system before the date provided.
+     */
     public User[] getUsersJoinedBefore(Date dateBefore) {
-    	//Get all the users
-    	this.userTree.clearNodes();
-    	this.userTree.inOrderTraversal(this.userTree.getRoot());
-    	MyArrayList<Node<Integer, User>> usersFound = this.userTree.getNodesTraversed();
+        //Get all the users in the system sorted by the date they joined.
+        this.userDateTree.clearNodes();
+    	this.userDateTree.inOrderTraversal(this.userDateTree.getRoot());
+        MyArrayList<Node<Date, User>> sortedDateList = this.userDateTree.getNodesTraversed();
 
-    	//Iterate over all the user's names, if they contain the query string add the node to the containedList.
-    	MyArrayList<Node<Integer, User>> usersContaining = new MyArrayList<>();
-    	for(int i=0; i<usersFound.size(); i++) {
-    		if(usersFound.get(i).getValue().getDateJoined().before(dateBefore)) {
-    			usersContaining.add(usersFound.get(i));
-    		}
-    	}
-
-    	//Now to sort the array of users containing the query by adding them to a new tree keyed with the date.
-    	AVLTree<Date, User> sortedDateTree = new AVLTree<>();
-    	for(int j=0; j<usersContaining.size(); j++) {
-    		sortedDateTree.insertKeyValuePair(usersContaining.get(j).getValue().getDateJoined(), usersContaining.get(j).getValue());
-    	}
-
-    	//Traverse the new tree in order so we get most recent first.
-    	sortedDateTree.clearNodes();
-    	sortedDateTree.inOrderTraversal(sortedDateTree.getRoot());
-    	MyArrayList<Node<Date, User>> sortedDateList = sortedDateTree.getNodesTraversed();
+        MyArrayList<User> usersBefore = new MyArrayList<>();
+        for(int i=0; i<sortedDateList.size(); i++) {
+            User user = sortedDateList.get(i).getValue();
+            if(user.getDateJoined().before(dateBefore)) {
+                //the uer joined before the date specified, we can add them to the return array.
+                usersBefore.add(user);
+            }
+        }
 
     	//Create the storage array which we can return of type User.
-    	User[] toReturn = new User[sortedDateList.size()];
-    	for(int k=0; k<sortedDateList.size(); k++) {
-    		toReturn[k] = sortedDateList.get(k).getValue();
+    	User[] toReturn = new User[usersBefore.size()];
+    	for(int k=0; k<usersBefore.size(); k++) {
+    		toReturn[k] = usersBefore.get(k);
     	}
         return toReturn;
     }
@@ -137,135 +130,135 @@ public class UserStore implements IUserStore {
 
     class AVLTree<K extends Comparable<K>, V> {
 
-    //The root node of this tree. The single node at the top for which every other node stems from.
-    private Node root;
-    private int treeSize;
+        //The root node of this tree. The single node at the top for which every other node stems from.
+        private Node root;
+        private int treeSize;
 
-    //Constructor for the AVLTree, not actually used right now.
-    public AVLTree() {
-    	this.treeSize = 0;
-    }
+        //Constructor for the AVLTree, not actually used right now.
+        public AVLTree() {
+            this.treeSize = 0;
+        }
 
-    public Node getRoot() {
-    	return this.root;
-    }
+        public Node getRoot() {
+            return this.root;
+        }
 
-    public int getTreeSize() {
-    	return this.treeSize;
-    }
+        public int getTreeSize() {
+            return this.treeSize;
+        }
 
-    public void setRoot(Node n) {
-    	this.root = n;
-    }
+        public void setRoot(Node n) {
+            this.root = n;
+        }
 
-    public void setTreeSize(int size) {
-    	this.treeSize = size;
-    }
+        public void setTreeSize(int size) {
+            this.treeSize = size;
+        }
 
-    //O(logn) insertion in this tree as we need to traverse the tree to find the right location.
-    private Node insertNode(Node locationNode, Node insertingNode) {
-        if (locationNode != null) {
-            //Compare the location node we intend to the key of the node we are inserting.
-            int comparison = ((Comparable<K>) locationNode.key).compareTo((K) insertingNode.key);
+        //O(logn) insertion in this tree as we need to traverse the tree to find the right location.
+        private Node insertNode(Node locationNode, Node insertingNode) {
+            if (locationNode != null) {
+                //Compare the location node we intend to the key of the node we are inserting.
+                int comparison = ((Comparable<K>) locationNode.key).compareTo((K) insertingNode.key);
 
-            //If they are the same we can overwrite the location value with the value of our new node.
-            if (comparison <= 0) {
-                //The key of the location node is comparatively less than the node we are inserting, we can recursively call the insert down the left of this tree.
-                locationNode.left = insertNode(locationNode.left, insertingNode);
+                //If they are the same we can overwrite the location value with the value of our new node.
+                if (comparison <= 0) {
+                    //The key of the location node is comparatively less than the node we are inserting, we can recursively call the insert down the left of this tree.
+                    locationNode.left = insertNode(locationNode.left, insertingNode);
+                } else {
+                    //The key of the location node is comparatively more than the node we are inserting, we can recursively call the insert down the right of this tree.
+                    locationNode.right = insertNode(locationNode.right, insertingNode);
+                }
+
+                //We have just inserted data into this nodes subtree somewhere, we should rebalance this node now so it maintains optimal data structure efficiency.
+                return locationNode.balanceNode();
             } else {
-                //The key of the location node is comparatively more than the node we are inserting, we can recursively call the insert down the right of this tree.
-                locationNode.right = insertNode(locationNode.right, insertingNode);
+                return insertingNode;
+            }
+        }
+
+        //O(logn) peroformance as it just makes a call to the function insertNode()
+        public void insertKeyValuePair(K key, V value) {
+            this.treeSize++;
+            root = insertNode(root, new Node<>(key, value));
+        }
+
+        //Check if the tree has data within it or not by comparing the root value to null as everything stems from this node.
+        public boolean isEmpty() {
+            return this.root == null;
+        }
+
+        //Clear the tree of all its nodes by deleting the greatest parent (root node)
+        public void clearTree() {
+            this.root = null;
+        }
+
+
+        //O(logn) performance as we traverse the tree to find the value found at the key, the maximum height of the tree is logn of the numbers of nodes.
+        public V get(K key) {
+            //The key isnt provided? return null we cant search for nothing.
+            if (key == null) {
+                return null;
             }
 
-            //We have just inserted data into this nodes subtree somewhere, we should rebalance this node now so it maintains optimal data structure efficiency.
-            return locationNode.balanceNode();
-        } else {
-            return insertingNode;
-        }
-    }
+            //The node we are trying to find, we will search recursively down the subtrees by calling the second get method below this
+            Node toFind = get(root, key);
+            if (toFind == null) {
+                return null;
+            }
 
-    //O(logn) peroformance as it just makes a call to the function insertNode()
-    public void insertKeyValuePair(K key, V value) {
-        this.treeSize++;
-        root = insertNode(root, new Node<>(key, value));
-     }
-
-    //Check if the tree has data within it or not by comparing the root value to null as everything stems from this node.
-    public boolean isEmpty() {
-    	return this.root == null;
-    }
-
-    //Clear the tree of all its nodes by deleting the greatest parent (root node)
-    public void clearTree() {
-    	this.root = null;
-    }
-
-
-    //O(logn) performance as we traverse the tree to find the value found at the key, the maximum height of the tree is logn of the numbers of nodes.
-    public V get(K key) {
-    	//The key isnt provided? return null we cant search for nothing.
-        if (key == null) {
-        	return null;
+            //We found the node we were looking for, return the value associated within it as the recursive searched is only returning a node for abstraction purposes if needed later.
+            return (V) toFind.value;
         }
 
-        //The node we are trying to find, we will search recursively down the subtrees by calling the second get method below this
-        Node toFind = get(root, key);
-        if (toFind == null) {
-        	return null;
+        private Node get(Node currentNode, K key) {
+            //Cant search against nothing, return null to show an error occured.
+            if (currentNode == null)
+                return null;
+
+            //The comparison we are making between the the key we have and the key we are looking for in the avl tree structure
+            int comparison = ((Comparable<K>) currentNode.key).compareTo(key);
+
+            if (comparison < 0) {
+                //The node we are looking for has a key less than the current node, we should go down the left subtree.
+                return get(currentNode.left, key);
+            } else if (comparison > 0) {
+                //The key we are searching for has a value greater than the key at the current node, search down the right subtree.
+                return get(currentNode.right, key);
+            } else {
+                //We are at the node (comparison == 0) we are looking for, return this node.
+                return currentNode;
+            }
         }
 
-        //We found the node we were looking for, return the value associated within it as the recursive searched is only returning a node for abstraction purposes if needed later.
-        return (V) toFind.value;
-    }
 
-    private Node get(Node currentNode, K key) {
-    	//Cant search against nothing, return null to show an error occured.
-        if (currentNode == null)
-        	return null;
+        //O(n) performance to get all the nodes in the tree by order root, left, right.
+        private MyArrayList<Node<K, V>> nodes = new MyArrayList<>();
 
-        //The comparison we are making between the the key we have and the key we are looking for in the avl tree structure
-        int comparison = ((Comparable<K>) currentNode.key).compareTo(key);
+    //O(n) performance to get all the nodes in the list in ascending order by key.
+        public void inOrderTraversal(Node n) {
+            //The node doesnt exist, we cant traverse this.
+            if(n == null) {
+                return;
+            }
 
-        if (comparison < 0) {
-        	//The node we are looking for has a key less than the current node, we should go down the left subtree.
-        	return get(currentNode.left, key);
-        } else if (comparison > 0) {
-        	//The key we are searching for has a value greater than the key at the current node, search down the right subtree.
-        	return get(currentNode.right, key);
-        } else {
-        	//We are at the node (comparison == 0) we are looking for, return this node.
-        	return currentNode;
+            inOrderTraversal(n.left); //left
+            //We must use addToTail so the list is inserted in ascending order based on the AVLTree comparable.
+            this.nodes.add(n); //root
+            inOrderTraversal(n.right); //right
         }
-    }
 
+        //Method to clear the locally stored nodes linked list.
+        public void clearNodes() {
+            this.nodes.clear();
+        }
 
-    //O(n) performance to get all the nodes in the tree by order root, left, right.
-    private MyArrayList<Node<K, V>> nodes = new MyArrayList<>();
+        //Getter method for the array found above the preOrderTraversal() method because the data for this is stored there.
+        public MyArrayList<Node<K, V>> getNodesTraversed() {
+            return this.nodes;
+        }
 
-   //O(n) performance to get all the nodes in the list in ascending order by key.
-    public void inOrderTraversal(Node n) {
-    	//The node doesnt exist, we cant traverse this.
-		if(n == null) {
-			return;
-		}
-
-		inOrderTraversal(n.left); //left
-		//We must use addToTail so the list is inserted in ascending order based on the AVLTree comparable.
-		this.nodes.add(n); //root
-		inOrderTraversal(n.right); //right
-    }
-
-    //Method to clear the locally stored nodes linked list.
-    public void clearNodes() {
-    	this.nodes.clear();
-    }
-
-    //Getter method for the array found above the preOrderTraversal() method because the data for this is stored there.
-    public MyArrayList<Node<K, V>> getNodesTraversed() {
-    	return this.nodes;
-    }
-
-  //End of the AVLTree class
+    //End of the AVLTree class
   }
 
   class Node<K, V> {
