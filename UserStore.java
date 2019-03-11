@@ -20,15 +20,25 @@ public class UserStore implements IUserStore {
         this.userTree = new AVLTree<>();
     }
 
+    /**
+    * addUser() - O(logn) method to create a new user in the system.
+    * @param usr - The user to create if not already present
+    * @return - True if the user was created in the tree, false otherwise
+    */
     public boolean addUser(User usr) {
+        //Check for the user already in the system by searching through the AVLTree
         if(this.userTree.get(usr.getId()) != null) {
             return false;
         } else {
+            //The user doesnt already exist, add them in the format specified.
             this.userTree.insertKeyValuePair(usr.getId(), usr);
             return true;
         }
     }
 
+    /**
+    *
+    */
     public User getUser(int uid) {
         return this.userTree.get(uid);
     }
